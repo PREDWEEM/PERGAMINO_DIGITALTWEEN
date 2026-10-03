@@ -62,3 +62,17 @@ def test_interval_flows_are_assimilated_against_daily_model_sum():
     assert audit["Potencial_estacional_PLM2"].nunique() == 1
     assert audit["Acumulado_observado_PLM2"].tolist() == [20.0, 55.0]
     assert np.isclose(adjusted.iloc[-1]["EMERAC_TWIN"], 1.0)
+
+
+def test_only_zero_counts_do_not_divide_by_zero_and_keep_the_model_state():
+
+    dates = pd.date_range("2026-03-01", periods=60)
+    cumulative = np.linspace(0.0, 1.0, len(dates))
+    trajectory = pd.DataFrame({
+        "Fecha": dates, "EMERAC_NORMALIZADA": cumulative, "Normalizacion_Disponible": True,
+    })
+    zero = pd.DataFrame({"Fecha": [pd.Timestamp("2026-04-01")], "Flujo_observado_PLM2": [0.0]})
+    twin, audit = assimilate_observations(trajectory, zero)
+    assert audit.empty
+    assert twin["MODO_ASIMILACION"].eq("conteos en cero: potencial estacional no estimable").all()
+    np.testing.assert_allclose(twin["EMERAC_TWIN"], cumulative)

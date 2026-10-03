@@ -8,6 +8,47 @@ import pandas as pd
 from .weather import forecast_mask
 
 
+def onset_window_from_observations(observations, as_of) -> tuple[tuple, dict]:
+    """Ventana de inicio de la emergencia que implican los conteos hasta el corte.
+
+    Devuelve ``((desde, hasta), info)``. ``hasta`` es la fecha del primer
+    conteo positivo: ya había plantas. ``desde`` es el día siguiente al último
+    conteo en cero anterior (el intervalo de un conteo termina en su fecha), y
+    sólo existe si hay un conteo en cero explícito; sin él sólo hay cota
+    superior. Si todavía no hay conteos positivos pero sí uno en cero, sólo hay
+    cota inferior: ``(desde, None)``. Sólo se usan conteos de la campaña del
+    corte y hasta el corte. ``((None, None), info)`` si no hay conteos válidos.
+    """
+    info = {"source": None, "first_positive": None, "last_zero": None}
+    if observations is None or len(observations) == 0:
+        return (None, None), info
+    cutoff = pd.Timestamp(as_of).tz_localize(None).normalize()
+    frame = observations.copy()
+    dates = pd.to_datetime(frame["Fecha"], errors="coerce").dt.tz_localize(None).dt.normalize()
+    for column in ("Flujo_observado_PLM2", "Observado"):
+        if column not in frame:
+            continue
+        values = pd.to_numeric(frame[column], errors="coerce")
+        valid = dates.notna() & np.isfinite(values) & dates.le(cutoff) & dates.dt.year.eq(cutoff.year)
+        if not valid.any():
+            continue
+        table = pd.DataFrame({"Fecha": dates[valid], "valor": values[valid]}).sort_values("Fecha")
+        positive = table[table["valor"] > 0]
+        first = positive["Fecha"].iloc[0] if not positive.empty else None
+        zeros = table[(table["valor"] <= 0) & ((table["Fecha"] < first) if first is not None else True)]
+        last_zero = zeros["Fecha"].iloc[-1] if not zeros.empty else None
+        if first is None and last_zero is None:
+            continue
+        info.update(
+            source=column,
+            first_positive=first.date().isoformat() if first is not None else None,
+            last_zero=last_zero.date().isoformat() if last_zero is not None else None,
+        )
+        earliest = last_zero + pd.Timedelta(days=1) if last_zero is not None else None
+        return (earliest, first), info
+    return (None, None), info
+
+
 def onset_alert(trajectory, as_of, observations=None, enabled=True) -> dict:
     """Consulta el primer pico del motor en la campaña hasta el corte + 7 días.
 
@@ -49,13 +90,30 @@ def onset_alert(trajectory, as_of, observations=None, enabled=True) -> dict:
         dates = dates[positive & dates.le(cutoff) & dates.dt.year.eq(cutoff.year)]
         if not dates.empty:
             first = dates.min()
+            message = (
+                f"Había plantas a más tardar el {first:%d/%m/%Y}. "
+                "El primer conteo positivo no fija el día exacto de inicio. "
+                "Continúe el seguimiento de los nuevos nacimientos."
+            )
+            if "Inicio_Anclado" in frame and frame["Inicio_Anclado"].fillna(False).astype(bool).any():
+                since = pd.to_datetime(frame["Inicio_Ventana_Desde"], errors="coerce").dropna()
+                since = since.iloc[0] if len(since) else None
+                result["anchored"] = True
+                result["onset_window"] = [
+                    since.date().isoformat() if since is not None else None,
+                    first.date().isoformat(),
+                ]
+                span = (f"entre el {since:%d/%m/%Y} y el {first:%d/%m/%Y}"
+                        if since is not None else f"a más tardar el {first:%d/%m/%Y}")
+                message += f" Inicio anclado a los conteos: {span}."
+                if result["model_onset_date"]:
+                    message += (" Primer pico y tiempo térmico desde el "
+                                f"{pd.Timestamp(result['model_onset_date']):%d/%m/%Y}.")
             result.update(
                 status="observed", mode="Conteo de campo", level="warning",
                 title="Emergencia ya registrada en el lote",
                 first_positive_date=first.date().isoformat(),
-                message=f"Había plantas a más tardar el {first:%d/%m/%Y}. "
-                        "El primer conteo positivo no fija el día exacto de inicio. "
-                        "Continúe el seguimiento de los nuevos nacimientos.",
+                message=message,
             )
             return result
 

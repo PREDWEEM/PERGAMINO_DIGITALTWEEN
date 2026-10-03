@@ -38,6 +38,7 @@ series son SIGA Pergamino enero–julio de 2024 y la serie operativa 2026.
 - **Sin techo decreciente del 15/04** (`decay_enabled=False`): el monolito de Pergamino no lo usa. El código se conserva, desactivado, y sus columnas de auditoría siguen presentes.
 - **Con desfase de emergencia** (`lag_emergencia_dias=15`), que el motor de Tres Arroyos no tiene. Se guarda la señal previa en `EMERREL_SIN_LAG`.
 - Parámetros propios: cobertura 80 %, choque 45 mm con techo 0,75, latitud −33,9443, longitud −60,5745.
+- **Anclaje opcional del inicio a los conteos de campo** (`onset_window`, interruptor en la app, activo por defecto; sin conteos el motor es idéntico al de origen). Ver «Inicio anclado a los conteos».
 - Una fila con TMAX < TMIN **detiene** la corrida con un error explícito (el monolito la procesaba). El actualizador ya descarta esas filas de SIGA.
 
 ## Validación disponible (preliminar)
@@ -61,9 +62,21 @@ menores no son interpretables. Motor oficial = termoinhibición 26 °C y desfase
 - Elevar la termoinhibición de 20 a 26 °C mejora ambas campañas (PR #10 de LOLIUM-PERGA2026).
 - **El desfase de 15 días no mejora de forma consistente:** reduce el error en 2026 (58,0 → 47,8 %) y lo empeora en 2024 (15,3 → 30,5 %). Es un corrimiento empírico, no un mecanismo.
 - **2026, hitos (25 / 50 / 75 %):** modelo 30/03, 11/04, 01/05; observado (por fecha de visita) 22/04, 21/05, 17/06. El modelo se adelanta entre 3 y 7 semanas y concentra 74 % de su flujo en abril–mayo y menos de 1 % entre junio y el 3 de julio, mientras que en el campo los intervalos que terminan entre el 01/06 y el 03/07 aportaron 43 % de las plantas contadas. **Es el principal error conocido del motor.**
-- El motor modela un primer flujo el 05/03/2026, pero según el responsable del ensayo no hubo emergencia en febrero ni marzo. La alerta de inicio y el tiempo térmico desde el primer pico heredan ese adelanto.
+- El motor modela un primer flujo el 05/03/2026, pero según el responsable del ensayo no hubo emergencia en febrero ni marzo. La alerta de inicio y el tiempo térmico desde el primer pico heredan ese adelanto, salvo que se active el anclaje a los conteos.
 
 No hay validación independiente fuera de estas dos campañas. Las dos se usaron para evaluar el umbral de termoinhibición; este repositorio no documenta con qué datos se fijó el desfase de 15 días, que ya figuraba en el motor de origen.
+
+## Inicio anclado a los conteos
+
+El inicio (primer pico) condiciona el tiempo térmico y la banda de 600–800 °Cd. El motor lo fija sólo con clima y no es predecible así: el inicio modelado es 07/03 en 2024 (observado: 2.ª quincena de febrero) y 05/03 en 2026 (observado: 01–13/04); el clima de febrero–marzo de ambos años no los distingue. Por eso, cuando hay conteos, se acota el inicio a lo observado:
+
+- **Ventana:** desde el día siguiente al último conteo en cero hasta la fecha del primer conteo positivo (el intervalo de un conteo termina en su fecha). Se necesita un conteo en cero explícito para tener cota inferior; sin él sólo hay cota superior. Sólo cuentan conteos de la campaña y hasta el corte.
+- **Reglas** (`apply_onset_anchor` en `core.py`): el flujo anterior a la cota inferior se anula; el inicio es el primer día con EMERREL > 0,20 desde esa cota; si cae después del primer conteo positivo (o no existe), se fija en esa fecha. No se inventa flujo: en este último caso sólo cambia el origen del tiempo térmico.
+- **Auditoría:** columnas `Inicio_Anclado`, `Inicio_Modelado_Sin_Ancla`, `Inicio_Ventana_Desde/Hasta`, `Inicio_Anclaje_Motivo`.
+- **Efecto en 2026** (ventana 02–13/04, conteos 01/04 en cero y 13/04 positivo): inicio 05/03 → 04/04 (motor oficial); tiempo térmico al 21/05: 1045 → 637 °Cd. Con 20 °C el inicio ya caía dentro de la ventana (06/04) y no cambia. Sin desfase: 18/02 → 05/04.
+- **Lo que no corrige:** la masa de la emergencia sigue adelantada. Hitos 25/50/75 % del motor oficial con anclaje: 11/04, 30/04, 06/05 (observado 22/04, 21/05, 17/06); el TVD de 2026 no cambia (47,8 %).
+- **No es una validación:** el cero del 01/04 de 2026 es un límite convencional dado por el responsable, y la ventana se obtiene de los mismos conteos con los que se evalúa. Sólo sirve una vez que hay visitas; no mejora la predicción antes de ellas.
+- **Cuando sólo hay conteos en cero** no se asimila nada (el potencial estacional no es estimable); se corrigió un error previo que dividía por cero en ese caso.
 
 ## Referencia estacional
 

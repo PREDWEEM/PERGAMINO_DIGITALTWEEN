@@ -43,7 +43,9 @@ rama `main` y archivo principal `app.py`.
 
 - **Configuración del gemelo:** lote y fecha, meteorología y cobertura, parámetros.
 - **Estado del lote:** emergencia acumulada, flujo diario o semanal, curva base, estado
-  actualizado y banda de control 600–800 °Cd desde el primer pico.
+  actualizado y banda de control 600–800 °Cd desde el primer pico. **El inicio se ancla a los
+  conteos de campo** (interruptor, activo): se acota entre el último conteo en cero y el primer
+  conteo positivo, y el reloj térmico parte de ahí (ver `MODEL_PROVENANCE.md`).
 - **Porcentaje acumulado:** se normaliza con la referencia disponible en cada corte (2023 desde el 31/07/2023;
   2023 y 2024 desde el 31/07/2024; 2023, 2024 y 2026 desde el 03/07/2026). Antes del 31/07/2023
   figura «aún no estimable» (flujo absoluto, tiempo térmico y alerta de inicio siguen
@@ -95,6 +97,6 @@ Para regenerar el perfil experimental: `python scripts/calibrate_site.py`.
 ## Límites conocidos
 
 - Dos campañas de evaluación del motor (2024 digitalizada de un boletín, en unidades relativas; 2026 con 10 conteos), sin repeticiones ni validación independiente. 2023 sólo aporta curva de referencia: no tiene meteorología completa y no se evaluó el motor en esa campaña.
-- Adelanto de la emergencia modelada en 2026 y primer flujo el 05/03 pese a que no hubo emergencia en febrero–marzo; la alerta de inicio hereda ese adelanto.
+- Adelanto de la emergencia modelada en 2026 y primer flujo el 05/03 pese a que no hubo emergencia en febrero–marzo; la alerta de inicio hereda ese adelanto hasta que haya conteos (con ellos, el inicio se ancla a la ventana observada, pero la masa de la emergencia sigue adelantada).
 - El desfase de 15 días mejora 2026 pero empeora 2024: es un corrimiento empírico.
 - No se verificó el aspecto visual en un navegador ni el despliegue en Streamlit Community Cloud (las 180 pruebas pasan en GitHub Actions).

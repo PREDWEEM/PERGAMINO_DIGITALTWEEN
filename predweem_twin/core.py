@@ -213,6 +213,61 @@ def apply_first_peak_filter(df: pd.DataFrame, threshold: float = 0.20):
     return df, first
 
 
+def apply_onset_anchor(
+    df: pd.DataFrame,
+    window,
+    threshold: float = 0.20,
+):
+    """Acota el inicio de la emergencia a la ventana observada en el campo.
+
+    ``window = (desde, hasta)``: ``desde`` es el primer día en que puede haber
+    emergencia (un conteo en cero termina el día anterior) y ``hasta`` es la
+    fecha del primer conteo positivo (ya había plantas). Cualquiera puede ser
+    ``None``. Reglas:
+
+    * el flujo anterior a ``desde`` se anula (el campo no tenía emergencia);
+    * el inicio es el primer día con EMERREL > ``threshold`` desde ``desde``;
+    * si ese inicio cae después de ``hasta`` (o el modelo no tiene primer
+      pico), el inicio se fija en ``hasta``. No se inventa flujo: sólo cambia
+      el origen del reloj térmico y la marca de primer pico.
+
+    Devuelve ``(df, índice_del_inicio_o_None)``.
+    """
+    df = df.copy()
+    earliest = pd.Timestamp(window[0]).normalize() if window and window[0] is not None else None
+    latest = pd.Timestamp(window[1]).normalize() if window and window[1] is not None else None
+    if earliest is not None and latest is not None and earliest > latest:
+        raise ValueError("La ventana de inicio es inválida: desde > hasta.")
+    dates = pd.to_datetime(df["Fecha"]).dt.normalize()
+    unanchored = df.index[df["Primer_Pico_Habilitado"].astype(bool)]
+    df["Inicio_Modelado_Sin_Ancla"] = (
+        dates.loc[unanchored[0]] if len(unanchored) else pd.NaT
+    )
+    df["Inicio_Ventana_Desde"] = earliest if earliest is not None else pd.NaT
+    df["Inicio_Ventana_Hasta"] = latest if latest is not None else pd.NaT
+    if earliest is None and latest is None:
+        df["Inicio_Anclado"] = False
+        df["Inicio_Anclaje_Motivo"] = "sin anclaje"
+        return df, (int(unanchored[0]) if len(unanchored) else None)
+
+    if earliest is not None:
+        df.loc[dates < earliest, "EMERREL"] = 0.0
+    candidates = df.index[df["EMERREL"] > threshold]
+    first = int(candidates[0]) if len(candidates) else None
+    reason = "inicio del modelo dentro de la ventana"
+    if latest is not None and (first is None or dates.loc[first] > latest):
+        inside = df.index[dates <= latest]
+        if len(inside):
+            first = int(inside[-1])
+            reason = "inicio fijado en el primer conteo positivo (el modelo lo situaba después)"
+    elif earliest is not None and len(unanchored) and dates.loc[unanchored[0]] < earliest:
+        reason = "inicio del modelo anterior a la ventana: se retrasa al primer pico posterior al último conteo en cero"
+    df["Primer_Pico_Habilitado"] = (df.index >= first) if first is not None else False
+    df["Inicio_Anclado"] = True
+    df["Inicio_Anclaje_Motivo"] = reason
+    return df, first
+
+
 def apply_emergence_lag(df: pd.DataFrame, lag_days: int, column: str = "EMERREL") -> pd.DataFrame:
     """Desplaza ``lag_days`` días la tasa de emergencia dentro del calendario.
 
@@ -344,8 +399,13 @@ def run_predweem(
     coverage_series: pd.DataFrame | None = None,
     normalization_as_of=None,
     seasonal_reference: pd.DataFrame | None = None,
+    onset_window=None,
 ) -> pd.DataFrame:
-    """Ejecuta PREDWEEM y devuelve una trayectoria diaria auditable."""
+    """Ejecuta PREDWEEM y devuelve una trayectoria diaria auditable.
+
+    ``onset_window`` (opcional) acota el inicio a lo observado en el campo; ver
+    :func:`apply_onset_anchor`. Con ``None`` el motor es idéntico al de origen.
+    """
     df = _clean_weather(weather)
     df["Julian_days"] = df["Fecha"].dt.dayofyear
     df["Cobertura_Rastrojo"] = daily_coverage(
@@ -424,6 +484,7 @@ def run_predweem(
     df, _ = apply_first_peak_filter(df, params.umbral_primer_pico)
     df = apply_emergence_lag(df, params.lag_emergencia_dias)
     df, first_peak_index = apply_first_peak_filter(df, params.umbral_primer_pico)
+    df, first_peak_index = apply_onset_anchor(df, onset_window, params.umbral_primer_pico)
 
     df = apply_cohort_decay(df, first_peak_index, params)
 

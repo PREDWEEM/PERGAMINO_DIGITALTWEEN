@@ -246,6 +246,13 @@ def _assimilate_interval_flows(
         potential_prior_cv=potential_prior_cv,
     )
     final_potential = potential_info["potential"]
+    if not np.isfinite(final_potential) or final_potential <= 0.0:
+        # Sólo hay conteos en cero: confirman que aún no hubo plantas, pero no
+        # permiten estimar el potencial estacional (el flujo observado no se
+        # puede expresar como fracción). No se asimila nada, sin dividir por cero.
+        df["MODO_ASIMILACION"] = "conteos en cero: potencial estacional no estimable"
+        df["ULTIMA_OBSERVACION"] = max(row.Fecha for row, _, _ in records)
+        return df, pd.DataFrame()
     previous_idx = -1
     previous_posterior = 0.0
     cumulative_observed = 0.0
