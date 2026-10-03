@@ -75,8 +75,9 @@ def test_chart_shows_annual_context_without_extending_weather_or_changing_state(
         assert pd.to_datetime(trace.x).max() <= pd.Timestamp("2027-10-01")
         if "histórico" not in trace.name.casefold():
             assert pd.to_datetime(trace.x).max() <= pd.Timestamp("2027-05-12")
+    # La referencia local termina en el último conteo (03/07); después se marca sin referencia.
     for fig in (daily, cumulative):
-        assert "Sin referencia disponible" not in [item.text for item in fig.layout.annotations]
+        assert "Sin referencia disponible" in [item.text for item in fig.layout.annotations]
 
 
 def test_historical_backdrop_does_not_leak_2026_into_earlier_cutoffs():

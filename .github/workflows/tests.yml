@@ -19,11 +19,5 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: python -m pip install -r requirements.txt
-      - name: Pruebas
-        run: |
-          set +e
-          python -m pytest -q -rfE --tb=short 2>&1 | tee pytest.log
-          status=${PIPESTATUS[0]}
-          grep -E "^(FAILED|ERROR)|^E  |passed|failed" pytest.log | head -60 | while IFS= read -r line; do echo "::error::${line:0:400}"; done
-          exit $status
+      - run: python -m pytest -q
       - run: python -m compileall -q app.py predweem_twin
