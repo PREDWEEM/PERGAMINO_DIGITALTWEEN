@@ -92,4 +92,4 @@ Para regenerar el perfil experimental: `python scripts/calibrate_site.py`.
 - Dos campañas de evaluación (2024 digitalizada de un boletín; 2026 con 10 conteos), sin repeticiones ni validación independiente.
 - Adelanto de la emergencia modelada en 2026 y primer flujo el 05/03 pese a que no hubo emergencia en febrero–marzo; la alerta de inicio hereda ese adelanto.
 - El desfase de 15 días mejora 2026 pero empeora 2024: es un corrimiento empírico.
-- Las pruebas que requieren `plotly` y `streamlit.testing` no se ejecutaron al construir el repositorio.
+- No se verificó el aspecto visual en un navegador ni el despliegue en Streamlit Community Cloud (las 180 pruebas pasan en GitHub Actions).

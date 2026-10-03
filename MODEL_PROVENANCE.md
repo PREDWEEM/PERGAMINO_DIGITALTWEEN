@@ -92,5 +92,5 @@ de ese cambio de denominador no está evaluado.
 
 ## Qué no está verificado
 
-- Las pruebas que dependen de `plotly` y de `streamlit.testing` (gráficos, colores semanales, intensidad por gráfico y recarga en caliente) no pudieron ejecutarse en el entorno de construcción; son las mismas pruebas heredadas del gemelo de Tres Arroyos, adaptadas. Ejecute `python -m pytest -q` en un entorno con las dependencias de `requirements.txt` antes de publicar.
-- La interfaz se ejecutó de punta a punta con un `streamlit` simulado (sin renderizado), incluso con y sin referencia estacional; no se probó en un navegador.
+- La batería completa (180 pruebas, incluidas las de gráficos y la recarga en caliente con `streamlit.testing`) pasa en GitHub Actions con las dependencias de `requirements.txt` (pull request #1). No hubo ejecución en un navegador: no se comprobó el aspecto visual de la interfaz ni el despliegue en Streamlit Community Cloud.
+- Las cifras de la sección de validación no tienen prueba automática propia (ver arriba).
