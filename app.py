@@ -51,7 +51,7 @@ from predweem_twin.coverage import (
 )
 from predweem_twin.core import ModelParameters, PracticalANNModel, run_predweem
 from predweem_twin.observations import prepare_observations, read_observation_file
-from predweem_twin.onset import onset_alert
+from predweem_twin.onset import onset_alert, onset_window_from_observations
 from predweem_twin.scenarios import apply_scenario
 from predweem_twin.seasonal import load_local_seasonal_reference
 from predweem_twin.state import (
@@ -179,6 +179,16 @@ with st.expander("Configuración del gemelo", expanded=True):
                 "Funciona también sin conteos de campo."
             ),
         )
+        onset_anchor_enabled = st.toggle(
+            "Anclar el inicio a los conteos de campo", value=True,
+            key="onset_anchor_enabled",
+            help=(
+                "Si hay un conteo positivo, el inicio del primer pico y el reloj térmico se acotan a la "
+                "ventana observada: desde el último conteo en cero hasta el primer conteo positivo. "
+                "Sin un conteo en cero sólo se fija la cota superior. No usa conteos posteriores al "
+                "corte. Desactívelo para ver el inicio que sale sólo del clima."
+            ),
+        )
         w_max = st.number_input(
             "Agua superficial Wmax (mm)", min_value=5.0, max_value=60.0,
             value=18.81, step=0.1, format="%.2f",
@@ -265,6 +275,15 @@ if coverage_mode == "Serie observada" and active_coverage.empty:
         "No hay cobertura observada disponible hasta esta fecha. "
         "Se utiliza el valor de respaldo."
     )
+observations = store.observations(site_id)
+active_observations = observations[
+    (pd.to_datetime(observations["Fecha"], errors="coerce") <= pd.Timestamp(as_of))
+    & (pd.to_datetime(observations["Fecha"], errors="coerce").dt.year == pd.Timestamp(as_of).year)
+].copy()
+onset_window, onset_window_info = (
+    onset_window_from_observations(active_observations, as_of)
+    if onset_anchor_enabled else ((None, None), {})
+)
 base_trajectory = run_predweem(
     weather,
     model,
@@ -272,17 +291,13 @@ base_trajectory = run_predweem(
     coverage_series=coverage_series_for_model,
     normalization_as_of=as_of,
     seasonal_reference=seasonal_reference,
+    onset_window=onset_window,
 )
 coverage_at_cutoff = float(
     base_trajectory.loc[
         base_trajectory["Fecha"] <= pd.Timestamp(as_of), "Cobertura_Rastrojo"
     ].iloc[-1]
 )
-observations = store.observations(site_id)
-active_observations = observations[
-    (pd.to_datetime(observations["Fecha"], errors="coerce") <= pd.Timestamp(as_of))
-    & (pd.to_datetime(observations["Fecha"], errors="coerce").dt.year == pd.Timestamp(as_of).year)
-].copy()
 try:
     calibration_profile = load_site_profile(CALIBRATION_DIR / "pergamino_2026.json")
 except (ValueError, KeyError, TypeError) as error:
@@ -313,6 +328,11 @@ snapshot = build_twin_snapshot(
     seasonal_reference=seasonal_reference,
 )
 snapshot["calibration"] = calibration_audit
+snapshot["onset_anchor"] = {
+    "enabled": bool(onset_anchor_enabled),
+    "window": [None if value is None else pd.Timestamp(value).date().isoformat() for value in onset_window],
+    **onset_window_info,
+}
 snapshot["onset_alert"] = onset_alert(
     base_trajectory, as_of, observations=active_observations,
     enabled=onset_alert_enabled,
@@ -410,13 +430,32 @@ if onset_alert_enabled:
     st.caption(
         f'Base del aviso: {onset_notice["mode"]}. '
         "La alerta orienta la vigilancia; no confirma el inicio ni indica aplicar herbicidas. "
-        "El TT continúa desde el primer pico del modelo."
+        "El TT corre desde el primer pico (anclado a los conteos si la opción está activa)."
     )
     if onset_notice["mode"].startswith("Revisión retrospectiva"):
         st.caption(
             "Este aviso usa meteorología histórica o no verificable al corte: "
             "no demuestra una alerta emitida siete días antes."
         )
+
+if onset_anchor_enabled and any(value is not None for value in onset_window):
+    started = base_trajectory.loc[base_trajectory["Primer_Pico_Habilitado"], "Fecha"]
+    unanchored_start = base_trajectory["Inicio_Modelado_Sin_Ancla"].iloc[0]
+    lower_label = (
+        f"desde el {pd.Timestamp(onset_window[0]):%d/%m/%Y}" if onset_window[0] is not None
+        else "sin cota inferior (no hay un conteo en cero)"
+    )
+    upper_label = (
+        f"hasta el {pd.Timestamp(onset_window[1]):%d/%m/%Y}" if onset_window[1] is not None
+        else "sin conteos positivos todavía"
+    )
+    st.caption(
+        f"**Inicio anclado a los conteos:** ventana observada {lower_label}, {upper_label}. "
+        + (f"Primer pico y TT desde el {started.iloc[0]:%d/%m/%Y}" if len(started)
+           else "El modelo aún no activa el primer pico")
+        + (f" (por clima solo: {pd.Timestamp(unanchored_start):%d/%m/%Y})" if pd.notna(unanchored_start) else "")
+        + f". {base_trajectory['Inicio_Anclaje_Motivo'].iloc[0]}."
+    )
 
 metric_columns = st.columns(5)
 if not snapshot["normalization_available"]:
@@ -1057,6 +1096,7 @@ with tab_scenarios:
         coverage_series=coverage_series_for_model,
         normalization_as_of=as_of,
         seasonal_reference=seasonal_reference,
+        onset_window=onset_window,
     )
     scenario_calibrated, _ = apply_site_calibration(
         scenario_base, calibration_profile,
@@ -1102,6 +1142,7 @@ with tab_scenarios:
 with tab_audit:
     with st.expander("Alerta preventiva de inicio · detalle"):
         st.json(snapshot["onset_alert"])
+        st.json(snapshot["onset_anchor"])
     st.subheader("Trazabilidad científica")
     if seasonal_reference is None:
         st.write("Campañas utilizadas: ninguna disponible para este corte.")
@@ -1246,7 +1287,8 @@ with tab_audit:
         "Total_EMERREL_Referencia", "Fecha_Ancla_Normalizacion",
         "Progreso_Estacional_P10", "Progreso_Estacional_Referencia",
         "Progreso_Estacional_P90",
-        "Termoinhibida", "TT_DESDE_PICO", "EMERREL_ANTES_DECAIMIENTO",
+        "Termoinhibida", "TT_DESDE_PICO", "Inicio_Anclado", "Inicio_Modelado_Sin_Ancla",
+        "Inicio_Ventana_Desde", "Inicio_Ventana_Hasta", "EMERREL_ANTES_DECAIMIENTO",
         "Dias_Desde_15Abr", "Factor_Decaimiento_15Abr", "Techo_EMERREL_15Abr",
         "Tau_Decaimiento_15Abr_d", "Beta_Decaimiento_15Abr",
         "Intensidad_Decaimiento_15Abr", "Fraccion_Maxima_15Abr",

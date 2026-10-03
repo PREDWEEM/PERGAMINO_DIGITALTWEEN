@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "method": "monotone_logit_v1",
-  "profile_id": "pergamino-2026-07-03-v1-879c6e2655",
+  "profile_id": "pergamino-2026-07-03-v1-99addd4e16",
   "site": "Pergamino",
   "status": "experimental_una_campana",
   "training_year": 2026,
@@ -28,7 +28,7 @@
   },
   "observations_start": "2026-04-01",
   "initial_zero_reference": true,
-  "model_fingerprint": "0568f5788040c73c3c33bb46e81fe195b26c5eb0883ed122d2192214cd405487",
+  "model_fingerprint": "c0d18f32e6c3ff6c30341678eb4b53444f09b513b1e198390efb3d3c8debde8f",
   "model_parameters": {
     "cobertura_pct": 80.0,
     "w_max": 18.81,
