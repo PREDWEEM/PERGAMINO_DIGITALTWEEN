@@ -1,0 +1,31 @@
+{
+  "uploaded_filename": "VALIDA.xlsx (repositorio PREDWEEM/LOLIUM-PERGA2026)",
+  "uploaded_sha256": "7e36cb92140d1a6a09c4b14f41bbfd6a0859a3e431bd36232b941c864395e0ac",
+  "original_file": "pergamino_2026_original.xlsx",
+  "units": "plantas/m² por intervalo entre conteos (supuesto: igual interpretación que la sincronización evento a evento del monolito LOLIUM-PERGA2026)",
+  "initial_zero_reference": "2026-04-01",
+  "initial_zero_note": "Indicación del responsable del ensayo: no hubo emergencia en febrero ni marzo de 2026. La fecha 01/04 es un límite convencional del primer intervalo (cualquier fecha de febrero–marzo es equivalente); no es una visita registrada.",
+  "weather_repository": "https://github.com/PREDWEEM/LOLIUM-PERGA2026",
+  "weather_commit": "c55e346 (datos de meteo_daily.csv del commit 21bd1d4)",
+  "weather_source_path": "meteo_daily.csv",
+  "weather_source_sha256": "5f2bc4b18fd9408d9d6763162410178c14caa704b2f9f5c87ebbb18bc3c17bfd",
+  "weather_start": "2026-01-01",
+  "weather_end": "2026-10-01",
+  "weather_rows": 274,
+  "weather_nature": "Observaciones SIGA–INTA Pergamino (A872814) y puente provisional ECMWF IFS histórico (10 días: 01–04/01, 06/01 y 27/09–01/10)",
+  "weather_station": "A872814 / INTA Pergamino",
+  "weather_coordinates": {
+    "latitude": -33.9443,
+    "longitude": -60.5745
+  },
+  "model_coordinates": {
+    "latitude": -33.9443,
+    "longitude": -60.5745
+  },
+  "validation_cutoffs": [
+    "2026-05-21",
+    "2026-06-01",
+    "2026-06-17",
+    "2026-06-25"
+  ]
+}

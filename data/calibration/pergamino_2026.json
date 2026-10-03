@@ -1,0 +1,148 @@
+{
+  "schema_version": 1,
+  "method": "monotone_logit_v1",
+  "profile_id": "pergamino-2026-07-03-v1-3584b75de2",
+  "site": "Pergamino",
+  "status": "experimental_una_campana",
+  "training_year": 2026,
+  "training_through": "2026-07-03",
+  "available_from": "2026-07-03",
+  "season_complete": false,
+  "first_interval_excluded": true,
+  "parameters": {
+    "offset": -1.15,
+    "slope": 0.6
+  },
+  "fit": {
+    "n_observations": 11,
+    "n_intervals": 10,
+    "observed_window_total_plm2": 3215.0,
+    "rmse_base_plm2": 409.41565751833815,
+    "rmse_calibrated_plm2": 305.13606669177983,
+    "weighted_mse_base": 32.33433268155347,
+    "weighted_mse_calibrated": 17.960651851105375,
+    "regularization": 0.05,
+    "nuisance_scale_base": 4621.400427894606,
+    "nuisance_scale_calibrated": 3834.867876788775,
+    "parameter_at_bound": true
+  },
+  "observations_start": "2026-04-01",
+  "initial_zero_reference": true,
+  "model_fingerprint": "38b06919302381266b8a914e4063acbd6baa206214a8411e80ea0fde585b3f8c",
+  "model_parameters": {
+    "cobertura_pct": 80.0,
+    "w_max": 18.81,
+    "umbral_termoinhibicion": 26.0,
+    "umbral_choque_hidrico": 45.0,
+    "exponente_kr": 0.0,
+    "latitud": -33.9443,
+    "longitud": -60.5745,
+    "latencia_jd": 25,
+    "techo_choque": 0.75,
+    "calentamiento_suelo": 0.0,
+    "umbral_primer_pico": 0.2,
+    "t_base": 2.0,
+    "t_opt": 20.0,
+    "t_crit": 30.0,
+    "tt_control": 600.0,
+    "tt_limite": 800.0,
+    "lag_emergencia_dias": 15,
+    "decay_enabled": false,
+    "decay_tau_days": 40.0,
+    "decay_beta": 1.0,
+    "decay_intensity": 0.75,
+    "decay_cap_fraction": 0.1,
+    "decay_requiere_senal_previa": true,
+    "decay_umbral_senal_previa": 0.5,
+    "decay_min_dias_senal_previa": 1
+  },
+  "seasonal_reference": {
+    "scope": "Referencia local Pergamino 2026",
+    "n_campaigns": 1,
+    "campaigns": "pergamino_2026_counts.csv",
+    "sources": {
+      "2026": {
+        "path": "data/calibration/pergamino_2026_counts.csv",
+        "sha256": "29a35f16dbb66b71d38ca86e9fba4231b09e2a0bc1fbd2ecef16efadee223e0f",
+        "start": "2026-04-01",
+        "end": "2026-07-03",
+        "sample_count": 11,
+        "window_total_plm2": 3215.0,
+        "initial_zero_reference": true,
+        "processing": "acumulado / total registrado; interpolación lineal entre visitas",
+        "scope": "ventana registrada; no certifica el cierre biológico de la campaña",
+        "source_file": "data/calibration/pergamino_2026_source.json",
+        "weather": "Observaciones SIGA–INTA Pergamino (A872814) y puente provisional ECMWF IFS histórico (10 días: 01–04/01, 06/01 y 27/09–01/10)",
+        "initial_zero_note": "Indicación del responsable del ensayo: no hubo emergencia en febrero ni marzo de 2026. La fecha 01/04 es un límite convencional del primer intervalo (cualquier fecha de febrero–marzo es equivalente); no es una visita registrada.",
+        "used": true
+      }
+    },
+    "availability_rule": "cada campaña desde su último conteo; sin totales futuros",
+    "calibration_normalization": "EMERAC / total simulado de la ventana muestreada",
+    "calibration_window_total_emerrel": 16.93950931925866
+  },
+  "source": {
+    "uploaded_filename": "VALIDA.xlsx (repositorio PREDWEEM/LOLIUM-PERGA2026)",
+    "uploaded_sha256": "7e36cb92140d1a6a09c4b14f41bbfd6a0859a3e431bd36232b941c864395e0ac",
+    "original_file": "pergamino_2026_original.xlsx",
+    "units": "plantas/m² por intervalo entre conteos (supuesto: igual interpretación que la sincronización evento a evento del monolito LOLIUM-PERGA2026)",
+    "initial_zero_reference": "2026-04-01",
+    "initial_zero_note": "Indicación del responsable del ensayo: no hubo emergencia en febrero ni marzo de 2026. La fecha 01/04 es un límite convencional del primer intervalo (cualquier fecha de febrero–marzo es equivalente); no es una visita registrada.",
+    "weather_repository": "https://github.com/PREDWEEM/LOLIUM-PERGA2026",
+    "weather_commit": "c55e346 (datos de meteo_daily.csv del commit 21bd1d4)",
+    "weather_source_path": "meteo_daily.csv",
+    "weather_source_sha256": "5f2bc4b18fd9408d9d6763162410178c14caa704b2f9f5c87ebbb18bc3c17bfd",
+    "weather_start": "2026-01-01",
+    "weather_end": "2026-10-01",
+    "weather_rows": 274,
+    "weather_nature": "Observaciones SIGA–INTA Pergamino (A872814) y puente provisional ECMWF IFS histórico (10 días: 01–04/01, 06/01 y 27/09–01/10)",
+    "weather_station": "A872814 / INTA Pergamino",
+    "weather_coordinates": {
+      "latitude": -33.9443,
+      "longitude": -60.5745
+    },
+    "model_coordinates": {
+      "latitude": -33.9443,
+      "longitude": -60.5745
+    },
+    "validation_cutoffs": [
+      "2026-05-21",
+      "2026-06-01",
+      "2026-06-17",
+      "2026-06-25"
+    ],
+    "observations_file": "pergamino_2026_counts.csv",
+    "observations_sha256": "29a35f16dbb66b71d38ca86e9fba4231b09e2a0bc1fbd2ecef16efadee223e0f",
+    "weather_file": "pergamino_2026_weather.csv",
+    "weather_sha256": "5f2bc4b18fd9408d9d6763162410178c14caa704b2f9f5c87ebbb18bc3c17bfd",
+    "weather_types": {
+      "Observado": 179,
+      "Provisional": 5
+    },
+    "observed_total_plm2": 3215.0,
+    "replicate_count": null,
+    "replicate_conversion_factor": null
+  },
+  "validation": {
+    "kind": "hindcast_condicional_con_meteorologia_realizada",
+    "independent_season": false,
+    "n_intervals": 4,
+    "note": "Ajuste con datos hasta cada corte y evaluación del siguiente intervalo. Se utiliza meteorología SIGA observada, no la emisión de pronóstico disponible en cada corte. No demuestra transferencia a otra campaña ni precisión operativa a siete días.",
+    "rmse_base_plm2": 394.4570974224934,
+    "rmse_calibrated_plm2": 337.6690117535008,
+    "intervals_improved": 4
+  },
+  "limitations": [
+    "Una sola campaña incompleta (2026, 10 conteos entre abril y julio). No se estima ni transfiere un total estacional.",
+    "El registro inicial de cero del 2026-04-01 delimita el primer intervalo; no se infiere ausencia de emergencia en fechas anteriores.",
+    "Cobertura de 80 % y Wmax de 18.81 mm son supuestos de la configuración operativa; el archivo no informa manejo ni cobertura.",
+    "El archivo FECHA + PLM2 no incluye repeticiones. Se utiliza un piso de ponderación común, no un error de muestreo medido.",
+    "Se aplica el motor Pergamino de LOLIUM-PERGA2026 (termoinhibición 26 °C, choque hídrico 45 mm con techo 0,75, desfase fijo de emergencia de 15 días, sin techo decreciente del 15/04).",
+    "El progreso F del ajuste usa el total simulado de la ventana muestreada con meteorología realizada. En operación, F se estima con la referencia local de una campaña; el efecto de ese cambio de denominador no está evaluado.",
+    "La meteorología del ajuste incluye cinco días ECMWF provisionales (01–04/01 y 06/01) antes de la campaña; el resto, hasta el 03/07, son observaciones SIGA–INTA Pergamino.",
+    "La transformación no crea cohortes en fechas bloqueadas por el motor biofísico.",
+    "Un parámetro en su límite indica que persisten diferencias estructurales.",
+    "El ajuste no reduce automáticamente la incertidumbre de asimilación.",
+    "Los gráficos de la campaña de ajuste son retrospectivos, no predicciones independientes."
+  ]
+}

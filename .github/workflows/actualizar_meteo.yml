@@ -1,0 +1,271 @@
+name: Actualizar SIGA Pergamino y ECMWF ENS
+
+on:
+  schedule:
+    # 07:30 y 15:30 hora Argentina (UTC-3)
+    - cron: "30 10,18 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: actualizar-meteo-pergamino
+  cancel-in-progress: true
+
+jobs:
+  actualizar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install requests pandas numpy xlrd openpyxl
+
+      - name: Verificar sintaxis
+        run: |
+          python -m py_compile actualizar_meteo_pergamino.py
+          python -m py_compile actualizar_meteo_pergamino_robusto.py
+          python -m py_compile postprocesar_prec_p50_pergamino.py
+
+      - name: Actualizar SIGA, puente provisional y ECMWF ENS
+        env:
+          LATITUD: "-33.9443"
+          LONGITUD: "-60.5745"
+          SIGA_DOWNLOAD_URL: "https://siga.inta.gob.ar/document/series/A872814.xls"
+          SIGA_METHOD: GET
+          SIGA_LOCAL_FILE: A872814.xls
+          SIGA_PARAMS_JSON: ${{ secrets.SIGA_PARAMS_JSON }}
+          SIGA_POST_DATA_JSON: ${{ secrets.SIGA_POST_DATA_JSON }}
+          SIGA_HEADERS_JSON: ${{ secrets.SIGA_HEADERS_JSON }}
+        run: python actualizar_meteo_pergamino_robusto.py
+
+      - name: Validar serie meteorológica operativa
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          import numpy as np
+          import pandas as pd
+          from actualizar_meteo_pergamino import CAMPANIA_END
+
+          archivo = Path("meteo_daily.csv")
+          estado_path = Path("data/estado_actualizacion_meteo.json")
+          if not archivo.exists() or not estado_path.exists():
+              raise SystemExit(
+                  "No se generaron los archivos meteorológicos esperados."
+              )
+
+          df = pd.read_csv(archivo)
+          requeridas = {
+              "Fecha", "TMAX", "TMIN", "Prec", "TMEDIA",
+              "TMAX_Media_Ens", "TMIN_Media_Ens",
+              "TMEDIA_Media_Ens", "Prec_Media_Ens",
+              "TMAX_P50", "TMIN_P50", "TMEDIA_P50", "Prec_P50",
+              "Fuente", "TipoDato", "CalidadDato", "N_miembros",
+          }
+          faltantes = requeridas.difference(df.columns)
+          if faltantes:
+              raise SystemExit(
+                  f"Faltan columnas: {sorted(faltantes)}"
+              )
+
+          df["Fecha"] = pd.to_datetime(df["Fecha"], errors="coerce")
+          if df["Fecha"].isna().any() or df["Fecha"].duplicated().any():
+              raise SystemExit("Hay fechas inválidas o duplicadas.")
+
+          criticas = df[["TMAX", "TMIN", "Prec", "TMEDIA"]].apply(
+              pd.to_numeric, errors="coerce"
+          )
+          if criticas.isna().any().any():
+              fechas = df.loc[
+                  criticas.isna().any(axis=1), "Fecha"
+              ].dt.strftime("%Y-%m-%d").tolist()
+              raise SystemExit(
+                  f"Hay datos meteorológicos críticos nulos: {fechas[:20]}"
+              )
+          if (
+              (criticas["TMAX"] < criticas["TMIN"]).any()
+              or (criticas["Prec"] < 0).any()
+          ):
+              raise SystemExit(
+                  "Hay datos meteorológicos físicamente inválidos."
+              )
+
+          esperadas = pd.date_range(
+              df["Fecha"].min(), df["Fecha"].max(), freq="D"
+          )
+          huecos = esperadas.difference(pd.DatetimeIndex(df["Fecha"]))
+          if len(huecos):
+              raise SystemExit(
+                  "La serie no es diaria y continua: "
+                  + ", ".join(huecos.strftime("%Y-%m-%d")[:20])
+              )
+
+          tipos_validos = {"Observado", "Provisional", "Pronostico"}
+          desconocidos = (
+              set(df["TipoDato"].dropna().astype(str))
+              - tipos_validos
+          )
+          if desconocidos:
+              raise SystemExit(
+                  f"Tipos de dato desconocidos: {sorted(desconocidos)}"
+              )
+
+          hoy = (
+              pd.Timestamp.now(
+                  tz="America/Argentina/Buenos_Aires"
+              )
+              .normalize()
+              .tz_localize(None)
+          )
+          observado = df["TipoDato"].astype(str).eq("Observado")
+          provisional = df["TipoDato"].astype(str).eq("Provisional")
+          pronostico = df["TipoDato"].astype(str).eq("Pronostico")
+          if (df["Fecha"].dt.date > CAMPANIA_END).any():
+              raise SystemExit("Hay fechas posteriores al 1 de octubre de 2026.")
+          if not pronostico.any() and hoy.date() <= CAMPANIA_END:
+              raise SystemExit("No hay filas de pronóstico.")
+          if (
+              (df.loc[observado | provisional, "Fecha"] >= hoy).any()
+              or (df.loc[pronostico, "Fecha"] < hoy).any()
+          ):
+              raise SystemExit(
+                  "Hay filas ubicadas en un tramo temporal incorrecto."
+              )
+
+          for operativo, p50 in (
+              ("TMAX", "TMAX_P50"),
+              ("TMIN", "TMIN_P50"),
+              ("TMEDIA", "TMEDIA_P50"),
+              ("Prec", "Prec_P50"),
+          ):
+              valores = pd.to_numeric(
+                  df.loc[pronostico, operativo], errors="coerce"
+              )
+              percentil = pd.to_numeric(
+                  df.loc[pronostico, p50], errors="coerce"
+              )
+              if not np.allclose(
+                  valores,
+                  percentil,
+                  atol=1e-9,
+                  equal_nan=False,
+              ):
+                  raise SystemExit(
+                      f"{operativo} no coincide con {p50}."
+                  )
+
+          miembros = pd.to_numeric(
+              df.loc[pronostico, "N_miembros"], errors="coerce"
+          )
+          if miembros.isna().any() or (miembros < 30).any():
+              raise SystemExit(
+                  "El pronóstico tiene menos de 30 miembros válidos."
+              )
+
+          estado = json.loads(
+              estado_path.read_text(encoding="utf-8")
+          )
+          if (
+              estado.get("estadistico_operativo") != "P50"
+              or estado.get("huecos_finales")
+          ):
+              raise SystemExit(
+                  "El estado meteorológico final no es válido."
+              )
+
+          fechas_provisionales = set(
+              df.loc[provisional, "Fecha"]
+              .dt.strftime("%Y-%m-%d")
+          )
+          if fechas_provisionales != set(
+              estado.get("huecos_siga", [])
+          ):
+              raise SystemExit(
+                  "Las filas provisionales no coinciden "
+                  "con los huecos SIGA."
+              )
+
+          print(
+              df.groupby(
+                  ["Fuente", "TipoDato", "CalidadDato"],
+                  dropna=False,
+              ).size()
+          )
+          print(df.tail(12).to_string(index=False))
+          print(
+              json.dumps(
+                  estado, ensure_ascii=False, indent=2
+              )
+          )
+          PY
+
+      - name: Guardar archivos actualizados
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          TMPDIR_GENERADO="$(mktemp -d)"
+          mkdir -p "$TMPDIR_GENERADO/data/historico_pronosticos"
+
+          [ -f meteo_daily.csv ] && \
+            cp meteo_daily.csv "$TMPDIR_GENERADO/meteo_daily.csv"
+
+          for archivo in \
+            data/estado_actualizacion_meteo.json \
+            data/siga_pergamino_observado.csv
+          do
+            if [ -f "$archivo" ]; then
+              mkdir -p "$TMPDIR_GENERADO/$(dirname "$archivo")"
+              cp "$archivo" "$TMPDIR_GENERADO/$archivo"
+            fi
+          done
+
+          [ -d data/historico_pronosticos ] && \
+            cp -a data/historico_pronosticos/. \
+              "$TMPDIR_GENERADO/data/historico_pronosticos/" || true
+
+          git fetch origin main
+          git reset --hard origin/main
+
+          mkdir -p data/historico_pronosticos
+          [ -f "$TMPDIR_GENERADO/meteo_daily.csv" ] && \
+            cp "$TMPDIR_GENERADO/meteo_daily.csv" meteo_daily.csv
+
+          for archivo in \
+            data/estado_actualizacion_meteo.json \
+            data/siga_pergamino_observado.csv
+          do
+            if [ -f "$TMPDIR_GENERADO/$archivo" ]; then
+              mkdir -p "$(dirname "$archivo")"
+              cp "$TMPDIR_GENERADO/$archivo" "$archivo"
+            fi
+          done
+
+          [ -d "$TMPDIR_GENERADO/data/historico_pronosticos" ] && \
+            cp -a "$TMPDIR_GENERADO/data/historico_pronosticos/." \
+              data/historico_pronosticos/ || true
+
+          git add -A meteo_daily.csv data/
+          if git diff --cached --quiet; then
+            echo "No hay cambios para guardar."
+            exit 0
+          fi
+
+          git commit -m "Actualiza SIGA Pergamino y ECMWF ENS P50"
+          git push origin HEAD:main
