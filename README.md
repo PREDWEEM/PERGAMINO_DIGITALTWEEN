@@ -13,7 +13,7 @@ PREDWEEM. Todos los derechos reservados. Consulte [COPYRIGHT.md](COPYRIGHT.md).
 
 > **Léase antes de usar:** el motor de Pergamino adelanta la emergencia de 2026 entre
 > 3 y 7 semanas respecto de los conteos y casi no simula el flujo de junio. El
-> porcentaje acumulado depende de una referencia de una sola campaña. Detalles y cifras
+> porcentaje acumulado depende de una referencia de dos campañas con timing muy distinto. Detalles y cifras
 > en [MODEL_PROVENANCE.md](MODEL_PROVENANCE.md).
 
 ## Ejecutar
@@ -36,7 +36,7 @@ rama `main` y archivo principal `app.py`.
 | Desfase de emergencia | 15 días fijos, entre dos filtros de primer pico (`EMERREL_SIN_LAG` conserva la señal previa) |
 | Techo decreciente del 15/04 | No se usa (código conservado, desactivado) |
 | Meteorología | SIGA–INTA Pergamino `A872814` + puente ECMWF IFS + pronóstico ECMWF ENS P50 |
-| Referencia estacional | Campaña local 2026 (10 conteos); disponible desde el 03/07/2026 |
+| Referencia estacional | Curva DIMA 2024 (digitalizada, relativa) y campaña local 2026 (10 conteos, desde el 03/07/2026) |
 | Calibración local 2026 | Experimental, **desactivada por defecto** |
 
 ## Funcionamiento
@@ -44,9 +44,10 @@ rama `main` y archivo principal `app.py`.
 - **Configuración del gemelo:** lote y fecha, meteorología y cobertura, parámetros.
 - **Estado del lote:** emergencia acumulada, flujo diario o semanal, curva base, estado
   actualizado y banda de control 600–800 °Cd desde el primer pico.
-- **Porcentaje «aún no estimable»:** antes del 03/07/2026 no hay campaña de referencia;
-  la interfaz informa el flujo absoluto, el tiempo térmico y la alerta de inicio, pero
-  no un porcentaje. No equivale a emergencia nula.
+- **Porcentaje acumulado:** se normaliza con la referencia disponible en cada corte (2024 hasta
+  el 02/07/2026; 2024 y 2026 después). Antes del 31/07/2024 figura «aún no estimable» (flujo
+  absoluto, tiempo térmico y alerta de inicio siguen disponibles). **Con la referencia 2024 sola,
+  el porcentaje de 2026 queda muy sobreestimado.**
 - **Observaciones:** CSV/XLS/XLSX de flujos (plantas/m²) o emergencia acumulada;
   repeticiones y cobertura opcional. Se guardan por lote en `data/twin_state.db`
   (no versionado; en discos efímeros conserve los originales).
@@ -82,6 +83,7 @@ variable de repositorio `PERGAMINO_APP_URL` con la URL del despliegue
 | `data/calibration/pergamino_2026_counts.csv` | 10 conteos 2026 (plantas/m² por intervalo) más el cero convencional del 01/04 |
 | `data/calibration/pergamino_2026_original.xlsx` | `VALIDA.xlsx` original |
 | `data/calibration/pergamino_2026_weather.csv` | Meteorología del ajuste (SIGA, 10 días ECMWF provisionales) |
+| `data/reference/pergamino_2024_{counts,weather,source}.*` | Curva DIMA 2024 digitalizada (relativa, quincenal), meteorología SIGA 2024 y procedencia |
 | `data/calibration/pergamino_2026{,_fit,_holdout,_source}.*` | Perfil experimental, ajuste, evaluación temporal y procedencia |
 | `tests/golden/` | Salidas del monolito para la prueba de equivalencia |
 
@@ -89,7 +91,7 @@ Para regenerar el perfil experimental: `python scripts/calibrate_site.py`.
 
 ## Límites conocidos
 
-- Dos campañas de evaluación (2024 digitalizada de un boletín; 2026 con 10 conteos), sin repeticiones ni validación independiente.
+- Dos campañas de evaluación (2024 digitalizada de un boletín, en unidades relativas; 2026 con 10 conteos), sin repeticiones ni validación independiente.
 - Adelanto de la emergencia modelada en 2026 y primer flujo el 05/03 pese a que no hubo emergencia en febrero–marzo; la alerta de inicio hereda ese adelanto.
 - El desfase de 15 días mejora 2026 pero empeora 2024: es un corrimiento empírico.
 - No se verificó el aspecto visual en un navegador ni el despliegue en Streamlit Community Cloud (las 180 pruebas pasan en GitHub Actions).

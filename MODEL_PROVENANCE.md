@@ -2,9 +2,8 @@
 
 Este documento separa lo que el gemelo **hereda sin cambios**, lo que **verifica
 una prueba automática** y lo que **sólo está evaluado de forma preliminar**.
-Las cifras de la sección de validación se calcularon fuera del repositorio con el
-motor de [PREDWEEM/LOLIUM-PERGA2026](https://github.com/PREDWEEM/LOLIUM-PERGA2026)
-y no tienen prueba automática propia.
+Las cifras de la sección de validación las reproduce `tests/test_pergamino_validation.py`
+con los datos del repositorio.
 
 ## Activos originales
 
@@ -14,6 +13,7 @@ y no tienen prueba automática propia.
 | `modelo_clusters_k3.pkl` | LOLIUM-PERGA2026 | **No se incluye.** El gemelo no usa clústeres para normalizar. |
 | `meteo_daily.csv`, `actualizar_meteo_pergamino*.py`, `postprocesar_prec_p50_pergamino.py` | LOLIUM-PERGA2026, commit `c55e346` (datos del `21bd1d4`) | Copia sin cambios; el workflow de actualización es el mismo. |
 | `data/calibration/pergamino_2026_original.xlsx` | `VALIDA.xlsx` de LOLIUM-PERGA2026 | Original conservado; SHA-256 registrado en `pergamino_2026_source.json`. |
+| `data/reference/pergamino_2024_{counts,weather,source}` | Curva DIMA 2024 digitalizada y meteorología SIGA A872814 2024 | Incorporados el 03/10/2026; procedencia y SHA-256 en `pergamino_2024_source.json`. |
 
 ## Correspondencia del motor
 
@@ -53,8 +53,10 @@ menores no son interpretables. Motor oficial = termoinhibición 26 °C y desfase
 | 20 °C, desfase 15 d (valor previo de la interfaz) | 74,4 % | 58,2 % | 26/04 / 06/04 |
 | 20 °C, sin desfase | 60,1 % | 64,8 % | 11/04 / 22/03 |
 
-- La curva 2024 es una digitalización de la curva de Pergamino del Boletín 3 de la
-  Red DIMA (compilada con binning quincenal); **no se incluye en el repositorio** y no es un conteo propio.
+- La curva 2024 (`data/reference/pergamino_2024_counts.csv`) es una digitalización de la curva de
+  Pergamino del Boletín 3 de la Red DIMA, estimada a mano a partir de una captura: un valor por quincena,
+  en unidades relativas (eje 0–100), no plantas/m², con incertidumbre de digitalización no cuantificada.
+  No es un conteo propio.
 - Elevar la termoinhibición de 20 a 26 °C mejora ambas campañas (PR #10 de LOLIUM-PERGA2026).
 - **El desfase de 15 días no mejora de forma consistente:** reduce el error en 2026 (58,0 → 47,8 %) y lo empeora en 2024 (15,3 → 30,5 %). Es un corrimiento empírico, no un mecanismo.
 - **2026, hitos (25 / 50 / 75 %):** modelo 30/03, 11/04, 01/05; observado (por fecha de visita) 22/04, 21/05, 17/06. El modelo se adelanta entre 3 y 7 semanas y concentra 74 % de su flujo en abril–mayo y menos de 1 % entre junio y el 3 de julio, mientras que en el campo los intervalos que terminan entre el 01/06 y el 03/07 aportaron 43 % de las plantas contadas. **Es el principal error conocido del motor.**
@@ -64,9 +66,13 @@ No hay validación independiente fuera de estas dos campañas. Las dos se usaron
 
 ## Referencia estacional
 
-- Referencia local: única campaña con conteos propios, 2026 (10 conteos, 13/04–03/07, más un cero convencional el 01/04 que delimita el primer intervalo según la indicación del responsable: no hubo emergencia en febrero ni marzo). Se asume que `PLM2` es la emergencia del intervalo (plantas/m²); no hay repeticiones.
-- Una campaña entra en la referencia **desde su último conteo** (03/07/2026). Antes de esa fecha no hay referencia y el porcentaje acumulado figura como «aún no estimable» (se informan flujos absolutos y el tiempo térmico).
-- Con una sola campaña la normalización es frágil: no captura la variabilidad entre años. Se actualiza sola al agregar `data/reference/pergamino_<año>_counts.csv` (cada archivo debe comenzar con un cero que delimite el primer intervalo).
+Dos campañas, con igual peso y cada una normalizada por su propio total:
+
+- **2024** (`data/reference/pergamino_2024_counts.csv`): curva DIMA digitalizada, 12 quincenas de febrero a julio más un cero convencional el 31/01. Valores relativos; disponible desde el 31/07/2024.
+- **2026** (`data/calibration/pergamino_2026_counts.csv`): 10 conteos del 13/04 al 03/07, más un cero convencional el 01/04 que delimita el primer intervalo según la indicación del responsable (no hubo emergencia en febrero ni marzo). Se asume que `PLM2` es la emergencia del intervalo (plantas/m²); no hay repeticiones. Disponible desde el 03/07/2026.
+- Una campaña entra en la referencia **desde su último conteo**. Hasta el 02/07/2026 la referencia es **sólo 2024**; desde el 03/07/2026 son 2024 y 2026. Antes del 31/07/2024 no hay referencia y el porcentaje figura como «aún no estimable».
+- **Consecuencia para 2026:** las dos campañas tienen un timing muy distinto (2024: febrero–mayo, 91 % del progreso al día 120; 2026: abril–julio, 45 % al 30/04). Con la referencia 2024 sola, el porcentaje acumulado de 2026 antes del 03/07 sale muy sobreestimado (motor oficial: 91,5 % el 30/04 y 99,2 % el 21/05). Desde julio, el pool de dos curvas da una referencia intermedia que no representa a ninguna de las dos. Con dos campañas, P10 y P90 no miden variabilidad.
+- La referencia se actualiza sola al agregar `data/reference/pergamino_<año>_counts.csv` (cada archivo debe comenzar con un cero que delimite el primer intervalo; si existe `pergamino_<año>_source.json` con el SHA-256 de los conteos, se valida al cargar).
 - No se usa la referencia de clústeres de Tres Arroyos ni de otras localidades.
 
 ## Calibración local 2026 (experimental, desactivada por defecto)
@@ -93,4 +99,4 @@ de ese cambio de denominador no está evaluado.
 ## Qué no está verificado
 
 - La batería completa (180 pruebas, incluidas las de gráficos y la recarga en caliente con `streamlit.testing`) pasa en GitHub Actions con las dependencias de `requirements.txt` (pull request #1). No hubo ejecución en un navegador: no se comprobó el aspecto visual de la interfaz ni el despliegue en Streamlit Community Cloud.
-- Las cifras de la sección de validación no tienen prueba automática propia (ver arriba).
+- Las unidades de la curva 2024 y su digitalización quincenal no están verificadas contra los datos originales de la Red DIMA.

@@ -344,8 +344,7 @@ if source_option == "SIGA Pergamino + ECMWF operativa":
 if seasonal_reference is None:
     st.caption(
         "Referencia estacional local: ninguna campaña de Pergamino está disponible para "
-        "este corte (la campaña 2026 se habilita desde su último conteo, 03/07/2026). "
-        "El porcentaje acumulado no es estimable; se informan flujos absolutos."
+        "este corte. El porcentaje acumulado no es estimable; se informan flujos absolutos."
     )
 else:
     st.caption(
@@ -357,16 +356,22 @@ else:
     if reference_campaigns == 1:
         st.caption(
             "Con una sola campaña de referencia el porcentaje es una estimación frágil: "
-            "no captura la variabilidad entre años."
+            "no captura la variabilidad entre años. Antes del 03/07/2026 la única referencia "
+            "es la curva DIMA 2024 (febrero–mayo), mientras que en 2026 la emergencia contada "
+            "comenzó en abril: en 2026 el porcentaje de ese período queda sobreestimado."
         )
     for key, source in seasonal_reference.attrs.items():
         if key.startswith("source_") and source.get("used"):
             year = key.removeprefix("source_")
+            unit = (
+                "unidades relativas de la curva DIMA (no son plantas/m²)"
+                if source.get("units_kind") == "relativas" else "plantas/m²"
+            )
             st.caption(
                 f"{year}: {source['sample_count']} fechas del {pd.Timestamp(source['start']):%d/%m} al "
                 f"{pd.Timestamp(source['end']):%d/%m/%Y}; total registrado "
-                f"{source['window_total_plm2']:,.0f} plantas/m². Se interpola el acumulado entre "
-                "visitas; el cero inicial delimita el primer intervalo y el final del archivo "
+                f"{source['window_total_plm2']:,.0f} {unit}. Se interpola el acumulado entre "
+                "fechas; el cero inicial delimita el primer intervalo y el final del archivo "
                 "no certifica el fin de la emergencia."
             )
             if pd.Timestamp(as_of).year == int(year):
@@ -1117,6 +1122,28 @@ with tab_audit:
                 "pergamino_referencia_local.csv", "text/csv",
             )
     calibration_dir = BASE / "data/calibration"
+    reference_dir = BASE / "data/reference"
+    with st.expander("Fuentes de Pergamino 2024 (referencia histórica)"):
+        counts_2024 = pd.read_csv(reference_dir / "pergamino_2024_counts.csv")
+        st.write("Curva DIMA digitalizada · valores relativos · una fila por quincena (febrero–julio de 2024)")
+        st.dataframe(counts_2024, hide_index=True, width="stretch")
+        st.caption(
+            "Origen: gráfico de Pergamino (BA) del Boletín 3 de la Red DIMA, digitalizado a partir "
+            "de una captura aportada por el responsable. Los valores son relativos (eje 0–100), no "
+            "plantas/m²; la incertidumbre de la digitalización no está cuantificada y se asume que "
+            "cada valor es el flujo de toda la quincena. El cero del 31/01 no es una visita."
+        )
+        st.caption(
+            "Meteorología asociada: SIGA–INTA Pergamino (A872814), año 2024 completo, sin faltantes. "
+            "Se conserva para análisis históricos; no reemplaza la serie operativa."
+        )
+        for filename, label in (
+            ("pergamino_2024_counts.csv", "Descargar curva 2024"),
+            ("pergamino_2024_weather.csv", "Descargar meteorología 2024"),
+            ("pergamino_2024_source.json", "Descargar procedencia 2024"),
+        ):
+            st.download_button(label, (reference_dir / filename).read_bytes(), filename,
+                               "application/json" if filename.endswith(".json") else "text/csv")
     with st.expander("Fuentes de Pergamino 2026"):
         counts_2026 = pd.read_csv(calibration_dir / "pergamino_2026_counts.csv")
         st.write("Diez conteos · plantas/m² por intervalo · 13/04–03/07/2026 (cero inicial 01/04)")

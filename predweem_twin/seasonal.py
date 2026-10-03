@@ -57,12 +57,21 @@ def _local_counts(root, year, path):
         "processing": "acumulado / total registrado; interpolación lineal entre visitas",
         "scope": "ventana registrada; no certifica el cierre biológico de la campaña",
     }
+    metadata["units_kind"] = "plantas_m2"
     source_file = path.with_name(f"pergamino_{year}_source.json")
     if source_file.exists():
         source = json.loads(source_file.read_text(encoding="utf-8"))
-        metadata.update(source_file=source_file.relative_to(root).as_posix(),
-                        weather=source.get("weather_nature"),
-                        initial_zero_note=source.get("initial_zero_note"))
+        counts_info = source.get("counts", {})
+        if counts_info.get("sha256") and counts_info["sha256"] != metadata["sha256"]:
+            raise ValueError(f"La procedencia de Pergamino {year} no coincide con los conteos.")
+        weather = source.get("weather")
+        metadata.update(
+            source_file=source_file.relative_to(root).as_posix(),
+            weather=weather.get("nature") if isinstance(weather, dict) else source.get("weather_nature"),
+            initial_zero_note=counts_info.get("initial_zero_note", source.get("initial_zero_note")),
+            units_kind=counts_info.get("units_kind", "plantas_m2"),
+            origin=counts_info.get("origin"),
+        )
     return dates, flows, metadata
 
 

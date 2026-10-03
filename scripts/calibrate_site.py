@@ -53,7 +53,7 @@ def build_calibration(observations_path, weather_path, output_path, site="Pergam
     reference = load_local_seasonal_reference(ROOT, as_of=last_count)
     parameters = ModelParameters(cobertura_pct=coverage, w_max=w_max)
 
-    # Con una única campaña local no hay referencia para cortes anteriores a su
+    # La referencia local no incluye 2026 para cortes anteriores a su
     # último conteo. El progreso F se define entonces sobre la ventana
     # muestreada: EMERAC / total simulado hasta el último conteo (sólo salida
     # del modelo con meteorología realizada; no usa conteos de campo).
@@ -185,7 +185,7 @@ def build_calibration(observations_path, weather_path, output_path, site="Pergam
             f"Cobertura de {coverage:g} % y Wmax de {w_max:g} mm son supuestos de la configuración operativa; el archivo no informa manejo ni cobertura.",
             "El archivo FECHA + PLM2 no incluye repeticiones. Se utiliza un piso de ponderación común, no un error de muestreo medido.",
             "Se aplica el motor Pergamino de LOLIUM-PERGA2026 (termoinhibición 26 °C, choque hídrico 45 mm con techo 0,75, desfase fijo de emergencia de 15 días, sin techo decreciente del 15/04).",
-            "El progreso F del ajuste usa el total simulado de la ventana muestreada con meteorología realizada. En operación, F se estima con la referencia local de una campaña; el efecto de ese cambio de denominador no está evaluado.",
+            "El progreso F del ajuste usa el total simulado de la ventana muestreada con meteorología realizada. En operación, F se estima con la referencia local (curva DIMA 2024 digitalizada y, desde el 03/07/2026, también 2026); el efecto de ese cambio de denominador no está evaluado. La referencia 2024 está en unidades relativas, con resolución quincenal.",
             "La meteorología del ajuste incluye cinco días ECMWF provisionales (01–04/01 y 06/01) antes de la campaña; el resto, hasta el 03/07, son observaciones SIGA–INTA Pergamino.",
             "La transformación no crea cohortes en fechas bloqueadas por el motor biofísico.",
             "Un parámetro en su límite indica que persisten diferencias estructurales.",
