@@ -1,0 +1,30 @@
+{
+ "source": "PREDWEEM/LOLIUM-PERGA2026 c55e346 app_emergenciacombinado_core.simular_emergencia_local",
+ "base": {
+  "cobertura_pct": 80.0,
+  "w_max": 18.81
+ },
+ "cases": {
+  "default": {},
+  "sin_lag": {
+   "lag_emergencia_dias": 0
+  },
+  "term20": {
+   "umbral_termoinhibicion": 20.0
+  },
+  "cob50_w30": {
+   "cobertura_pct": 50.0,
+   "w_max": 30.0
+  },
+  "choque60_techo50": {
+   "umbral_choque_hidrico": 60.0,
+   "techo_choque": 0.5
+  },
+  "lag_neg5": {
+   "lag_emergencia_dias": -5
+  },
+  "kr1": {
+   "exponente_kr": 1.0
+  }
+ }
+}
