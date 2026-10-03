@@ -38,8 +38,9 @@ def test_app_reloads_reference_after_loader_changes():
         updated = loader()
         assert returned["calls"] == 2
         assert {"Campanas", "Campanas_Excluidas"}.issubset(updated.columns)
-        assert updated.N_Campanas.eq(2).all()
-        assert updated.Campanas.eq("pergamino_2024_counts.csv, pergamino_2026_counts.csv").all()
+        assert updated.N_Campanas.eq(3).all()
+        assert updated.Campanas.eq(
+            "pergamino_2023_counts.csv, pergamino_2024_counts.csv, pergamino_2026_counts.csv").all()
     finally:
         if hasattr(loader, "clear"):
             loader.clear()

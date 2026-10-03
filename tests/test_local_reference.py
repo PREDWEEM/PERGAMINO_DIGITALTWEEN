@@ -43,16 +43,37 @@ def test_2024_curve_conserves_each_interval_including_leap_day():
     assert reference.attrs["source_2026"]["units_kind"] == "plantas_m2"
 
 
-def test_quantiles_are_monotone_bounded_and_equal_weight_for_two_campaigns():
+def test_2023_curve_conserves_each_quincena_and_is_relative():
     reference = load_local_seasonal_reference(ROOT, as_of="2027-03-27")
-    assert reference.N_Campanas.eq(2).all()
+    counts = pd.read_csv(ROOT / "data/reference/pergamino_2023_counts.csv", parse_dates=["FECHA"])
+    curve = reference.set_index("Julian_days")["Progreso_2023"]
+    at_visits = curve.loc[counts.FECHA.dt.dayofyear.to_numpy()].to_numpy()
+    total = counts.PLM2.sum()
+    assert total == pytest.approx(99.0)
+    np.testing.assert_allclose(at_visits * total, counts.PLM2.cumsum(), atol=1e-9)
+    # Pico en la segunda quincena de mayo: 51 % del total de la curva.
+    assert counts.loc[counts.PLM2.idxmax(), "FECHA"] == pd.Timestamp("2023-05-31")
+    assert reference.attrs["source_2023"]["units_kind"] == "relativas"
+    assert reference.attrs["source_2023"]["sample_count"] == 12
+    assert reference.attrs["source_2023"]["weather"].startswith("No incorporada")
+
+
+def test_quantiles_are_monotone_bounded_and_equal_weight_for_three_campaigns():
+    reference = load_local_seasonal_reference(ROOT, as_of="2027-03-27")
+    assert reference.N_Campanas.eq(3).all()
     for column in ["Progreso_P10", "Progreso_Mediano", "Progreso_P90"]:
         valid = reference[column].dropna()
         assert valid.between(0, 1).all() and (valid.diff().dropna() >= -1e-12).all()
-    both = reference.N_Campanas_Dia.eq(2)
+    all_three = reference.N_Campanas_Dia.eq(3)
+    assert all_three.any()
     np.testing.assert_allclose(
-        reference.loc[both, "Progreso_Mediano_Empirico"],
-        reference.loc[both, ["Progreso_2024", "Progreso_2026"]].mean(axis=1),
+        reference.loc[all_three, "Progreso_Mediano_Empirico"],
+        reference.loc[all_three, ["Progreso_2023", "Progreso_2024", "Progreso_2026"]].median(axis=1),
+    )
+    two = reference.N_Campanas_Dia.eq(2)
+    np.testing.assert_allclose(
+        reference.loc[two, "Progreso_Mediano_Empirico"],
+        reference.loc[two, ["Progreso_2023", "Progreso_2024", "Progreso_2026"]].mean(axis=1),
     )
     assert reference.attrs["source_2026"]["initial_zero_reference"]
     assert reference.attrs["source_2026"]["sample_count"] == 11

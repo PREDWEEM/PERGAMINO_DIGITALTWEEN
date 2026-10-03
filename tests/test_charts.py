@@ -84,14 +84,14 @@ def test_chart_shows_annual_context_without_extending_weather_or_changing_state(
 
 
 def test_historical_backdrop_does_not_leak_2026_into_earlier_cutoffs():
-    # Antes del último conteo 2026 (03/07/2026) sólo está disponible la curva 2024.
+    # Antes del último conteo 2026 (03/07/2026) sólo están disponibles las curvas 2023 y 2024.
     early = load_local_seasonal_reference(ROOT, as_of="2026-05-05")
     assert "Progreso_2026" not in annual_historical_reference(early, "2026-05-05")
-    assert annual_historical_reference(early, "2026-05-05").attrs["campaigns"] == "2024"
-    assert load_local_seasonal_reference(ROOT, as_of="2024-07-30") is None
+    assert annual_historical_reference(early, "2026-05-05").attrs["campaigns"] == "2023, 2024"
+    assert load_local_seasonal_reference(ROOT, as_of="2023-07-30") is None
     ref = load_local_seasonal_reference(ROOT, as_of="2026-07-03")
     annual = annual_historical_reference(ref, "2026-07-03")
-    assert annual.attrs["campaigns"] == "2024, 2026"
+    assert annual.attrs["campaigns"] == "2023, 2024, 2026"
 
 
 def test_no_forecast_trace_when_weather_ends_at_cutoff(reference):

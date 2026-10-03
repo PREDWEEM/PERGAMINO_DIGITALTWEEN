@@ -356,9 +356,14 @@ else:
     if reference_campaigns == 1:
         st.caption(
             "Con una sola campaña de referencia el porcentaje es una estimación frágil: "
-            "no captura la variabilidad entre años. Antes del 03/07/2026 la única referencia "
-            "es la curva DIMA 2024 (febrero–mayo), mientras que en 2026 la emergencia contada "
-            "comenzó en abril: en 2026 el porcentaje de ese período queda sobreestimado."
+            "no captura la variabilidad entre años."
+        )
+    elif reference_campaigns == 2 and "2026" not in str(reference_years):
+        st.caption(
+            "Las dos curvas históricas disponibles tienen un timing muy distinto (2023: emergencia "
+            "concentrada en mayo; 2024: febrero–mayo), de modo que su mediana es un promedio entre "
+            "dos extremos y no representa a ninguna de las dos. Con dos campañas P10 y P90 no miden "
+            "variabilidad. Hasta el 03/07/2026 la campaña 2026 no está en la referencia."
         )
     for key, source in seasonal_reference.attrs.items():
         if key.startswith("source_") and source.get("used"):
@@ -1141,6 +1146,27 @@ with tab_audit:
             ("pergamino_2024_counts.csv", "Descargar curva 2024"),
             ("pergamino_2024_weather.csv", "Descargar meteorología 2024"),
             ("pergamino_2024_source.json", "Descargar procedencia 2024"),
+        ):
+            st.download_button(label, (reference_dir / filename).read_bytes(), filename,
+                               "application/json" if filename.endswith(".json") else "text/csv")
+    with st.expander("Fuentes de Pergamino 2023 (referencia histórica)"):
+        counts_2023 = pd.read_csv(reference_dir / "pergamino_2023_counts.csv")
+        st.write("Curva DIMA digitalizada · valores relativos (% de emergencia) · una fila por quincena (febrero–julio de 2023)")
+        st.dataframe(counts_2023, hide_index=True, width="stretch")
+        st.caption(
+            "Origen: gráfico de Pergamino (BA) del Reporte 4 de AAPPCE / Red DIMA (Lolium spp., Norte de "
+            "Bs. As.), digitalizado a partir de una captura aportada por el responsable. Los valores son "
+            "relativos (eje «% de emergencia» 0–100), no plantas/m²; la incertidumbre de la digitalización "
+            "no está cuantificada. El cero del 31/01 no es una visita."
+        )
+        st.caption(
+            "Meteorología: no incorporada. La serie SIGA–INTA de 2023 tiene 116 días sin registro y, de "
+            "abril a agosto, casi todos sin temperatura o precipitación; no se completó con datos "
+            "inventados. Por eso 2023 sirve como referencia de la curva pero no para evaluar el motor."
+        )
+        for filename, label in (
+            ("pergamino_2023_counts.csv", "Descargar curva 2023"),
+            ("pergamino_2023_source.json", "Descargar procedencia 2023"),
         ):
             st.download_button(label, (reference_dir / filename).read_bytes(), filename,
                                "application/json" if filename.endswith(".json") else "text/csv")
