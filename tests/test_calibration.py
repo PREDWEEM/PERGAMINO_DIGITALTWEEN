@@ -183,7 +183,9 @@ def test_profile_records_pergamino_engine_and_local_reference(real_data):
     assert parameters["umbral_termoinhibicion"] == 26. and parameters["umbral_choque_hidrico"] == 45.
     assert parameters["techo_choque"] == .75 and parameters["lag_emergencia_dias"] == 15
     assert parameters["decay_enabled"] is False
-    assert saved["seasonal_reference"]["n_campaigns"] == 1
+    assert saved["seasonal_reference"]["n_campaigns"] == 2
+    assert saved["seasonal_reference"]["campaigns"] == "pergamino_2024_counts.csv, pergamino_2026_counts.csv"
+    assert saved["seasonal_reference"]["sources"]["2024"]["units_kind"] == "relativas"
     assert saved["seasonal_reference"]["sources"]["2026"]["sample_count"] == 11
     assert saved["seasonal_reference"]["sources"]["2026"]["initial_zero_reference"] is True
     assert saved["validation"]["independent_season"] is False

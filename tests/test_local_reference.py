@@ -29,14 +29,42 @@ def test_2026_conserves_each_observed_interval_and_does_not_invent_early_zeros()
     assert curve.loc[first_zero] == 0 < curve.loc[first_zero + 1] < curve.loc[first_zero + 12]
 
 
-def test_single_campaign_quantiles_are_monotone_and_bounded():
+def test_2024_curve_conserves_each_interval_including_leap_day():
     reference = load_local_seasonal_reference(ROOT, as_of="2027-03-27")
-    assert reference.N_Campanas.eq(1).all()
+    counts = pd.read_csv(ROOT / "data/reference/pergamino_2024_counts.csv", parse_dates=["FECHA"])
+    curve = reference.set_index("Julian_days")["Progreso_2024"]
+    days = np.where(counts.FECHA.dt.strftime("%m-%d").eq("02-29"), 59.5,
+                    counts.FECHA.dt.dayofyear - (counts.FECHA.dt.month > 2))
+    at_visits = curve.loc[days].to_numpy()
+    total = counts.PLM2.sum()
+    assert total == 223
+    np.testing.assert_allclose(at_visits * total, counts.PLM2.cumsum(), atol=1e-9)
+    assert reference.attrs["source_2024"]["units_kind"] == "relativas"
+    assert reference.attrs["source_2026"]["units_kind"] == "plantas_m2"
+
+
+def test_quantiles_are_monotone_bounded_and_equal_weight_for_two_campaigns():
+    reference = load_local_seasonal_reference(ROOT, as_of="2027-03-27")
+    assert reference.N_Campanas.eq(2).all()
     for column in ["Progreso_P10", "Progreso_Mediano", "Progreso_P90"]:
         valid = reference[column].dropna()
         assert valid.between(0, 1).all() and (valid.diff().dropna() >= -1e-12).all()
+    both = reference.N_Campanas_Dia.eq(2)
+    np.testing.assert_allclose(
+        reference.loc[both, "Progreso_Mediano_Empirico"],
+        reference.loc[both, ["Progreso_2024", "Progreso_2026"]].mean(axis=1),
+    )
     assert reference.attrs["source_2026"]["initial_zero_reference"]
     assert reference.attrs["source_2026"]["sample_count"] == 11
+    assert reference.attrs["source_2024"]["sample_count"] == 13
+
+
+def test_source_hash_mismatch_is_rejected(tmp_path):
+    shutil.copytree(ROOT / "data", tmp_path / "data", ignore=shutil.ignore_patterns("historico_pronosticos", "*.db"))
+    path = tmp_path / "data/reference/pergamino_2024_counts.csv"
+    path.write_text(path.read_text().replace("43.0", "44.0", 1))
+    with pytest.raises(ValueError, match="procedencia"):
+        load_local_seasonal_reference(tmp_path, as_of="2027-03-27")
 
 
 def test_additional_campaign_is_picked_up_and_gets_equal_weight(tmp_path):

@@ -46,8 +46,11 @@ def test_reference_preserves_month_day_in_leap_year(reference):
     leap = annual_historical_reference(reference, "2028-05-05").set_index("Fecha")
     # Se alinea por mes/día: el 01/06 es el día 152 en 2027 y el 153 en 2028.
     assert leap.loc["2028-06-01", "Progreso_Mediano"] == normal.loc["2027-06-01", "Progreso_Mediano"]
-    assert 0 < leap.loc["2028-06-01", "Progreso_Mediano"] < 1
-    assert leap.loc["2028-02-29", "Progreso_Mediano"] != leap.loc["2028-02-29", "Progreso_Mediano"]  # NaN: sin referencia
+    assert leap.loc["2028-03-01", "Progreso_Mediano"] == normal.loc["2027-03-01", "Progreso_Mediano"]
+    # El conteo del 29/02/2024 ocupa la coordenada común 59,5.
+    assert leap.loc["2028-02-29", "Progreso_Mediano"] == pytest.approx(
+        reference.set_index("Julian_days").loc[59.5, "Progreso_Mediano"]
+    )
 
 
 def test_chart_shows_annual_context_without_extending_weather_or_changing_state(reference):
@@ -81,11 +84,14 @@ def test_chart_shows_annual_context_without_extending_weather_or_changing_state(
 
 
 def test_historical_backdrop_does_not_leak_2026_into_earlier_cutoffs():
-    # Antes del último conteo (03/07/2026) no hay campaña local disponible.
-    assert load_local_seasonal_reference(ROOT, as_of="2026-05-05") is None
+    # Antes del último conteo 2026 (03/07/2026) sólo está disponible la curva 2024.
+    early = load_local_seasonal_reference(ROOT, as_of="2026-05-05")
+    assert "Progreso_2026" not in annual_historical_reference(early, "2026-05-05")
+    assert annual_historical_reference(early, "2026-05-05").attrs["campaigns"] == "2024"
+    assert load_local_seasonal_reference(ROOT, as_of="2024-07-30") is None
     ref = load_local_seasonal_reference(ROOT, as_of="2026-07-03")
     annual = annual_historical_reference(ref, "2026-07-03")
-    assert annual.attrs["campaigns"] == "2026"
+    assert annual.attrs["campaigns"] == "2024, 2026"
 
 
 def test_no_forecast_trace_when_weather_ends_at_cutoff(reference):

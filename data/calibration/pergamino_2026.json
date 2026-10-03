@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "method": "monotone_logit_v1",
-  "profile_id": "pergamino-2026-07-03-v1-3584b75de2",
+  "profile_id": "pergamino-2026-07-03-v1-4e8c8e7ab5",
   "site": "Pergamino",
   "status": "experimental_una_campana",
   "training_year": 2026,
@@ -28,7 +28,7 @@
   },
   "observations_start": "2026-04-01",
   "initial_zero_reference": true,
-  "model_fingerprint": "38b06919302381266b8a914e4063acbd6baa206214a8411e80ea0fde585b3f8c",
+  "model_fingerprint": "896ac68b28a6886616230d3e56e5ccc81407df834ee227bd701a7b572b199758",
   "model_parameters": {
     "cobertura_pct": 80.0,
     "w_max": 18.81,
@@ -57,10 +57,27 @@
     "decay_min_dias_senal_previa": 1
   },
   "seasonal_reference": {
-    "scope": "Referencia local Pergamino 2026",
-    "n_campaigns": 1,
-    "campaigns": "pergamino_2026_counts.csv",
+    "scope": "Referencia local Pergamino 2024, 2026",
+    "n_campaigns": 2,
+    "campaigns": "pergamino_2024_counts.csv, pergamino_2026_counts.csv",
     "sources": {
+      "2024": {
+        "path": "data/reference/pergamino_2024_counts.csv",
+        "sha256": "74103b163383fd312963611395bebaafe19cc4019fbf16a513988db0f96b1441",
+        "start": "2024-01-31",
+        "end": "2024-07-31",
+        "sample_count": 13,
+        "window_total_plm2": 223.0,
+        "initial_zero_reference": true,
+        "processing": "acumulado / total registrado; interpolación lineal entre visitas",
+        "scope": "ventana registrada; no certifica el cierre biológico de la campaña",
+        "units_kind": "relativas",
+        "source_file": "data/reference/pergamino_2024_source.json",
+        "weather": "Observaciones SIGA–INTA Pergamino, sin puente ECMWF",
+        "initial_zero_note": "Límite convencional anterior a la primera quincena (1–15/02, valor 0); no es una visita registrada.",
+        "origin": "Pergamino (BA), Boletín 3 de la Red DIMA: captura del gráfico aportada por el responsable; valores estimados por digitalización, un valor por quincena de febrero a julio de 2024.",
+        "used": true
+      },
       "2026": {
         "path": "data/calibration/pergamino_2026_counts.csv",
         "sha256": "29a35f16dbb66b71d38ca86e9fba4231b09e2a0bc1fbd2ecef16efadee223e0f",
@@ -71,9 +88,11 @@
         "initial_zero_reference": true,
         "processing": "acumulado / total registrado; interpolación lineal entre visitas",
         "scope": "ventana registrada; no certifica el cierre biológico de la campaña",
+        "units_kind": "plantas_m2",
         "source_file": "data/calibration/pergamino_2026_source.json",
         "weather": "Observaciones SIGA–INTA Pergamino (A872814) y puente provisional ECMWF IFS histórico (10 días: 01–04/01, 06/01 y 27/09–01/10)",
         "initial_zero_note": "Indicación del responsable del ensayo: no hubo emergencia en febrero ni marzo de 2026. La fecha 01/04 es un límite convencional del primer intervalo (cualquier fecha de febrero–marzo es equivalente); no es una visita registrada.",
+        "origin": null,
         "used": true
       }
     },
@@ -138,7 +157,7 @@
     "Cobertura de 80 % y Wmax de 18.81 mm son supuestos de la configuración operativa; el archivo no informa manejo ni cobertura.",
     "El archivo FECHA + PLM2 no incluye repeticiones. Se utiliza un piso de ponderación común, no un error de muestreo medido.",
     "Se aplica el motor Pergamino de LOLIUM-PERGA2026 (termoinhibición 26 °C, choque hídrico 45 mm con techo 0,75, desfase fijo de emergencia de 15 días, sin techo decreciente del 15/04).",
-    "El progreso F del ajuste usa el total simulado de la ventana muestreada con meteorología realizada. En operación, F se estima con la referencia local de una campaña; el efecto de ese cambio de denominador no está evaluado.",
+    "El progreso F del ajuste usa el total simulado de la ventana muestreada con meteorología realizada. En operación, F se estima con la referencia local (curva DIMA 2024 digitalizada y, desde el 03/07/2026, también 2026); el efecto de ese cambio de denominador no está evaluado. La referencia 2024 está en unidades relativas, con resolución quincenal.",
     "La meteorología del ajuste incluye cinco días ECMWF provisionales (01–04/01 y 06/01) antes de la campaña; el resto, hasta el 03/07, son observaciones SIGA–INTA Pergamino.",
     "La transformación no crea cohortes en fechas bloqueadas por el motor biofísico.",
     "Un parámetro en su límite indica que persisten diferencias estructurales.",

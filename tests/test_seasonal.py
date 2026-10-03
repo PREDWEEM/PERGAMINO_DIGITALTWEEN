@@ -29,16 +29,20 @@ def test_partial_run_uses_historical_season_instead_of_ending_at_one():
     assert result["Normalizacion_Modo"].eq("referencia estacional histórica").all()
 
 
-def test_reference_uses_only_pergamino_2026_counts():
+def test_reference_uses_only_pergamino_2024_and_2026_counts():
     reference = load_local_seasonal_reference(ROOT, as_of="2027-01-01")
-    assert reference["N_Campanas"].eq(1).all()
-    assert reference["Campanas"].eq("pergamino_2026_counts.csv").all()
-    assert reference["Campanas_Anos"].eq("2026").all()
+    assert reference["N_Campanas"].eq(2).all()
+    assert reference["Campanas"].eq("pergamino_2024_counts.csv, pergamino_2026_counts.csv").all()
+    assert reference["Campanas_Anos"].eq("2024, 2026").all()
 
 
-def test_no_reference_is_returned_before_the_last_2026_count():
-    assert load_local_seasonal_reference(ROOT, as_of="2026-07-02") is None
-    assert load_local_seasonal_reference(ROOT, as_of="2026-07-03") is not None
+def test_each_campaign_enters_only_from_its_last_count():
+    assert load_local_seasonal_reference(ROOT, as_of="2024-07-30") is None
+    before = load_local_seasonal_reference(ROOT, as_of="2024-07-31")
+    assert before.Campanas_Anos.eq("2024").all()
+    assert load_local_seasonal_reference(ROOT, as_of="2026-07-02").Campanas_Anos.eq("2024").all()
+    assert load_local_seasonal_reference(ROOT, as_of="2026-07-03").Campanas_Anos.eq("2024, 2026").all()
+    assert "2026_counts.csv" in load_local_seasonal_reference(ROOT, as_of="2026-07-02").Campanas_Excluidas.iloc[0]
 
 
 def test_without_reference_the_percentage_is_not_estimable_not_zero():

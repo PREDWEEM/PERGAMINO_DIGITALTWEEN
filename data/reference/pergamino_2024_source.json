@@ -1,0 +1,28 @@
+{
+  "site": "Pergamino",
+  "year": 2024,
+  "role": "referencia histórica (curva relativa digitalizada)",
+  "incorporated_on": "2026-10-03",
+  "counts": {
+    "file": "pergamino_2024_counts.csv",
+    "sha256": "74103b163383fd312963611395bebaafe19cc4019fbf16a513988db0f96b1441",
+    "units_kind": "relativas",
+    "units": "valores relativos de la curva DIMA (eje Y 0–100 del gráfico); NO son plantas/m² verificadas. Se normalizan por su propio total.",
+    "origin": "Pergamino (BA), Boletín 3 de la Red DIMA: captura del gráfico aportada por el responsable; valores estimados por digitalización, un valor por quincena de febrero a julio de 2024.",
+    "resolution": "quincenal; cada fila es el fin de una quincena y el valor es el de esa quincena",
+    "initial_zero_reference": "2024-01-31",
+    "initial_zero_note": "Límite convencional anterior a la primera quincena (1–15/02, valor 0); no es una visita registrada.",
+    "digitization_uncertainty": "No cuantificada; el cálculo de intervalos asume que el valor digitalizado es el flujo de toda la quincena."
+  },
+  "weather": {
+    "file": "pergamino_2024_weather.csv",
+    "sha256": "a0841886a6e4758384ba333cd9abe64267a6c3187c0b73899dd02947559c091e",
+    "station": "A872814 / INTA Pergamino",
+    "origin": "A872814.xls de SIGA–INTA aportado por el responsable (convertido a .xlsx para su lectura; el original no se conserva en este repositorio)",
+    "start": "2024-01-01",
+    "end": "2024-12-31",
+    "rows": 366,
+    "columns": "Temperatura_Abrigo_150cm_Maxima/Minima y Precipitacion_Pluviometrica; sin faltantes en 2024",
+    "nature": "Observaciones SIGA–INTA Pergamino, sin puente ECMWF"
+  }
+}
