@@ -1,0 +1,19 @@
+{
+  "site": "Pergamino",
+  "year": 2023,
+  "role": "referencia histórica (curva relativa digitalizada)",
+  "incorporated_on": "2026-10-03",
+  "counts": {
+    "file": "pergamino_2023_counts.csv",
+    "sha256": "6782b32aeaa3f246c230b27d83015e5756b1286681facd400140dbb0fbc5a4e2",
+    "units_kind": "relativas",
+    "units": "valores relativos de la curva DIMA (eje Y «% de emergencia» 0–100 del gráfico); NO son plantas/m² verificadas. Se normalizan por su propio total (suman ≈99).",
+    "origin": "Pergamino (BA), Reporte 4 de AAPPCE / Red DIMA (Lolium spp., Norte de Bs. As., pág. 7): captura del gráfico aportada por el responsable; valores estimados por digitalización de la curva verde, un valor por quincena.",
+    "resolution": "quincenal; cada fila es el fin de una quincena y el valor es el de esa quincena (etiquetas del gráfico FEB 2ª a OCT 1ª)",
+    "initial_zero_reference": "2023-01-31",
+    "initial_zero_note": "Límite convencional anterior a la primera quincena del gráfico (FEB 2ª, valor 0); no es una visita registrada.",
+    "digitization_uncertainty": "No cuantificada (≈±1 punto de % por grosor de línea y suavizado de la curva; el valor de la línea base se descontó 0,4). Las quincenas AGO 1ª a OCT 1ª valen 0 en el gráfico y no se incluyen; la serie termina el 31/07/2023."
+  },
+  "weather": null,
+  "weather_nature": "No incorporada: la serie SIGA A872814 de 2023 tiene 116 días sin registro y, de abril a agosto, la mayoría de los días sin temperatura o precipitación; no se completa con datos inventados. Este año sólo sirve como referencia de la curva, no como evaluación del motor."
+}

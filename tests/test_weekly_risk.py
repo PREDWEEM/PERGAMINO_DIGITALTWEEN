@@ -56,7 +56,7 @@ def test_intensity_thresholds_and_future_flow_sum(reference, ratio, level):
 def test_peak_matches_complete_historical_bars_and_available_pool(cutoff):
     cutoff = pd.Timestamp(cutoff)
     reference = load_local_seasonal_reference(ROOT, as_of=cutoff)
-    assert reference.Campanas_Anos.iloc[0] == "2024, 2026"
+    assert reference.Campanas_Anos.iloc[0] == "2023, 2024, 2026"
     frame = forecast(cutoff=cutoff)
     weekly, _ = trajectory_charts(frame, None, cutoff, seasonal_reference=reference, flow_frequency="Semanal")
     historical = weekly.data[0]

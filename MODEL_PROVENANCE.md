@@ -14,6 +14,7 @@ con los datos del repositorio.
 | `meteo_daily.csv`, `actualizar_meteo_pergamino*.py`, `postprocesar_prec_p50_pergamino.py` | LOLIUM-PERGA2026, commit `c55e346` (datos del `21bd1d4`) | Copia sin cambios; el workflow de actualización es el mismo. |
 | `data/calibration/pergamino_2026_original.xlsx` | `VALIDA.xlsx` de LOLIUM-PERGA2026 | Original conservado; SHA-256 registrado en `pergamino_2026_source.json`. |
 | `data/reference/pergamino_2024_{counts,weather,source}` | Curva DIMA 2024 digitalizada y meteorología SIGA A872814 2024 | Incorporados el 03/10/2026; procedencia y SHA-256 en `pergamino_2024_source.json`. |
+| `data/reference/pergamino_2023_{counts,source}` | Curva DIMA 2023 digitalizada (Reporte 4 de AAPPCE / Red DIMA, pág. 7, captura aportada por el responsable) | Incorporada el 03/10/2026; procedencia y SHA-256 en `pergamino_2023_source.json`. **Sin meteorología:** la serie SIGA A872814 de 2023 tiene 116 días sin registro y, de abril a agosto, casi todos los días sin temperatura o precipitación; no se completó. |
 
 ## Correspondencia del motor
 
@@ -66,12 +67,14 @@ No hay validación independiente fuera de estas dos campañas. Las dos se usaron
 
 ## Referencia estacional
 
-Dos campañas, con igual peso y cada una normalizada por su propio total:
+Tres campañas, con igual peso y cada una normalizada por su propio total:
+
+- **2023** (`data/reference/pergamino_2023_counts.csv`): curva DIMA digitalizada (Reporte 4 de AAPPCE / Red DIMA), 11 quincenas de febrero a julio más un cero convencional el 31/01 (AGO 1ª–OCT 1ª valen 0 en el gráfico y no se incluyen). Valores relativos («% de emergencia», suman ≈99); picos: 51 % en la 2ª quincena de mayo y 35 % en la 1ª; 7 % y 4,5 % en las dos de junio. Disponible desde el 31/07/2023. La digitalización se verificó superponiéndola al gráfico; la incertidumbre (≈±1 punto) no está cuantificada.
 
 - **2024** (`data/reference/pergamino_2024_counts.csv`): curva DIMA digitalizada, 12 quincenas de febrero a julio más un cero convencional el 31/01. Valores relativos; disponible desde el 31/07/2024.
 - **2026** (`data/calibration/pergamino_2026_counts.csv`): 10 conteos del 13/04 al 03/07, más un cero convencional el 01/04 que delimita el primer intervalo según la indicación del responsable (no hubo emergencia en febrero ni marzo). Se asume que `PLM2` es la emergencia del intervalo (plantas/m²); no hay repeticiones. Disponible desde el 03/07/2026.
-- Una campaña entra en la referencia **desde su último conteo**. Hasta el 02/07/2026 la referencia es **sólo 2024**; desde el 03/07/2026 son 2024 y 2026. Antes del 31/07/2024 no hay referencia y el porcentaje figura como «aún no estimable».
-- **Consecuencia para 2026:** las dos campañas tienen un timing muy distinto (2024: febrero–mayo, 91 % del progreso al día 120; 2026: abril–julio, 45 % al 30/04). Con la referencia 2024 sola, el porcentaje acumulado de 2026 antes del 03/07 sale muy sobreestimado (motor oficial: 91,5 % el 30/04 y 99,2 % el 21/05). Desde julio, el pool de dos curvas da una referencia intermedia que no representa a ninguna de las dos. Con dos campañas, P10 y P90 no miden variabilidad.
+- Una campaña entra en la referencia **desde su último conteo**. Hasta el 30/07/2024 la referencia es sólo 2023; del 31/07/2024 al 02/07/2026 son 2023 y 2024; desde el 03/07/2026, 2023, 2024 y 2026. Antes del 31/07/2023 no hay referencia y el porcentaje figura como «aún no estimable».
+- **Consecuencia para 2026:** el timing difiere mucho entre campañas. Progreso de cada curva el 30/04 / 21/05 / 17/06: 2023 0,8 % / 55,8 % / 96,1 %; 2024 91,5 % / 99,2 % / 100 %; 2026 (conteos) 44,6 % / 56,6 % / 92,0 %. Hasta el 02/07/2026 la referencia es la mediana de 2023 y 2024 (para dos curvas, su promedio): 46,1 % / 77,5 % / 98,0 %. **El 46,1 % del 30/04 coincide con lo observado sólo porque promedia 0,8 % y 91,5 %, no porque el pool represente a 2026;** el 21/05 sigue sobreestimado 21 puntos. Con la referencia 2024 sola (versión anterior) eran 91,5 % y 99,2 %. Con dos campañas P10 y P90 no miden variabilidad, y con tres tampoco pueden interpretarse como intervalos.
 - La referencia se actualiza sola al agregar `data/reference/pergamino_<año>_counts.csv` (cada archivo debe comenzar con un cero que delimite el primer intervalo; si existe `pergamino_<año>_source.json` con el SHA-256 de los conteos, se valida al cargar).
 - No se usa la referencia de clústeres de Tres Arroyos ni de otras localidades.
 
@@ -99,4 +102,5 @@ de ese cambio de denominador no está evaluado.
 ## Qué no está verificado
 
 - La batería completa (180 pruebas, incluidas las de gráficos y la recarga en caliente con `streamlit.testing`) pasa en GitHub Actions con las dependencias de `requirements.txt` (pull request #1). No hubo ejecución en un navegador: no se comprobó el aspecto visual de la interfaz ni el despliegue en Streamlit Community Cloud.
-- Las unidades de la curva 2024 y su digitalización quincenal no están verificadas contra los datos originales de la Red DIMA.
+- Las unidades de las curvas 2023 y 2024 y su digitalización quincenal no están verificadas contra los datos originales de la Red DIMA.
+- El motor no se evaluó en 2023: falta meteorología SIGA completa para abril–agosto de ese año.

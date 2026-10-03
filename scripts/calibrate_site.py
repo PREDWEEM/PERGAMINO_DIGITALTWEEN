@@ -185,7 +185,7 @@ def build_calibration(observations_path, weather_path, output_path, site="Pergam
             f"Cobertura de {coverage:g} % y Wmax de {w_max:g} mm son supuestos de la configuración operativa; el archivo no informa manejo ni cobertura.",
             "El archivo FECHA + PLM2 no incluye repeticiones. Se utiliza un piso de ponderación común, no un error de muestreo medido.",
             "Se aplica el motor Pergamino de LOLIUM-PERGA2026 (termoinhibición 26 °C, choque hídrico 45 mm con techo 0,75, desfase fijo de emergencia de 15 días, sin techo decreciente del 15/04).",
-            "El progreso F del ajuste usa el total simulado de la ventana muestreada con meteorología realizada. En operación, F se estima con la referencia local (curva DIMA 2024 digitalizada y, desde el 03/07/2026, también 2026); el efecto de ese cambio de denominador no está evaluado. La referencia 2024 está en unidades relativas, con resolución quincenal.",
+            "El progreso F del ajuste usa el total simulado de la ventana muestreada con meteorología realizada. En operación, F se estima con la referencia local (curvas DIMA 2023 y 2024 digitalizadas y, desde el 03/07/2026, también 2026); el efecto de ese cambio de denominador no está evaluado. Las referencias 2023 y 2024 están en unidades relativas, con resolución quincenal.",
             "La meteorología del ajuste incluye cinco días ECMWF provisionales (01–04/01 y 06/01) antes de la campaña; el resto, hasta el 03/07, son observaciones SIGA–INTA Pergamino.",
             "La transformación no crea cohortes en fechas bloqueadas por el motor biofísico.",
             "Un parámetro en su límite indica que persisten diferencias estructurales.",

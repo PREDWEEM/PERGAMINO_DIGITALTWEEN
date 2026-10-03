@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "method": "monotone_logit_v1",
-  "profile_id": "pergamino-2026-07-03-v1-4e8c8e7ab5",
+  "profile_id": "pergamino-2026-07-03-v1-879c6e2655",
   "site": "Pergamino",
   "status": "experimental_una_campana",
   "training_year": 2026,
@@ -28,7 +28,7 @@
   },
   "observations_start": "2026-04-01",
   "initial_zero_reference": true,
-  "model_fingerprint": "896ac68b28a6886616230d3e56e5ccc81407df834ee227bd701a7b572b199758",
+  "model_fingerprint": "0568f5788040c73c3c33bb46e81fe195b26c5eb0883ed122d2192214cd405487",
   "model_parameters": {
     "cobertura_pct": 80.0,
     "w_max": 18.81,
@@ -57,10 +57,27 @@
     "decay_min_dias_senal_previa": 1
   },
   "seasonal_reference": {
-    "scope": "Referencia local Pergamino 2024, 2026",
-    "n_campaigns": 2,
-    "campaigns": "pergamino_2024_counts.csv, pergamino_2026_counts.csv",
+    "scope": "Referencia local Pergamino 2023, 2024, 2026",
+    "n_campaigns": 3,
+    "campaigns": "pergamino_2023_counts.csv, pergamino_2024_counts.csv, pergamino_2026_counts.csv",
     "sources": {
+      "2023": {
+        "path": "data/reference/pergamino_2023_counts.csv",
+        "sha256": "6782b32aeaa3f246c230b27d83015e5756b1286681facd400140dbb0fbc5a4e2",
+        "start": "2023-01-31",
+        "end": "2023-07-31",
+        "sample_count": 12,
+        "window_total_plm2": 99.0,
+        "initial_zero_reference": true,
+        "processing": "acumulado / total registrado; interpolación lineal entre visitas",
+        "scope": "ventana registrada; no certifica el cierre biológico de la campaña",
+        "units_kind": "relativas",
+        "source_file": "data/reference/pergamino_2023_source.json",
+        "weather": "No incorporada: la serie SIGA A872814 de 2023 tiene 116 días sin registro y, de abril a agosto, la mayoría de los días sin temperatura o precipitación; no se completa con datos inventados. Este año sólo sirve como referencia de la curva, no como evaluación del motor.",
+        "initial_zero_note": "Límite convencional anterior a la primera quincena del gráfico (FEB 2ª, valor 0); no es una visita registrada.",
+        "origin": "Pergamino (BA), Reporte 4 de AAPPCE / Red DIMA (Lolium spp., Norte de Bs. As., pág. 7): captura del gráfico aportada por el responsable; valores estimados por digitalización de la curva verde, un valor por quincena.",
+        "used": true
+      },
       "2024": {
         "path": "data/reference/pergamino_2024_counts.csv",
         "sha256": "74103b163383fd312963611395bebaafe19cc4019fbf16a513988db0f96b1441",
@@ -157,7 +174,7 @@
     "Cobertura de 80 % y Wmax de 18.81 mm son supuestos de la configuración operativa; el archivo no informa manejo ni cobertura.",
     "El archivo FECHA + PLM2 no incluye repeticiones. Se utiliza un piso de ponderación común, no un error de muestreo medido.",
     "Se aplica el motor Pergamino de LOLIUM-PERGA2026 (termoinhibición 26 °C, choque hídrico 45 mm con techo 0,75, desfase fijo de emergencia de 15 días, sin techo decreciente del 15/04).",
-    "El progreso F del ajuste usa el total simulado de la ventana muestreada con meteorología realizada. En operación, F se estima con la referencia local (curva DIMA 2024 digitalizada y, desde el 03/07/2026, también 2026); el efecto de ese cambio de denominador no está evaluado. La referencia 2024 está en unidades relativas, con resolución quincenal.",
+    "El progreso F del ajuste usa el total simulado de la ventana muestreada con meteorología realizada. En operación, F se estima con la referencia local (curvas DIMA 2023 y 2024 digitalizadas y, desde el 03/07/2026, también 2026); el efecto de ese cambio de denominador no está evaluado. Las referencias 2023 y 2024 están en unidades relativas, con resolución quincenal.",
     "La meteorología del ajuste incluye cinco días ECMWF provisionales (01–04/01 y 06/01) antes de la campaña; el resto, hasta el 03/07, son observaciones SIGA–INTA Pergamino.",
     "La transformación no crea cohortes en fechas bloqueadas por el motor biofísico.",
     "Un parámetro en su límite indica que persisten diferencias estructurales.",

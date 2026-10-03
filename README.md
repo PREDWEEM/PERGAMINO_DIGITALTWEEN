@@ -36,7 +36,7 @@ rama `main` y archivo principal `app.py`.
 | Desfase de emergencia | 15 días fijos, entre dos filtros de primer pico (`EMERREL_SIN_LAG` conserva la señal previa) |
 | Techo decreciente del 15/04 | No se usa (código conservado, desactivado) |
 | Meteorología | SIGA–INTA Pergamino `A872814` + puente ECMWF IFS + pronóstico ECMWF ENS P50 |
-| Referencia estacional | Curva DIMA 2024 (digitalizada, relativa) y campaña local 2026 (10 conteos, desde el 03/07/2026) |
+| Referencia estacional | Curvas DIMA 2023 y 2024 (digitalizadas, relativas) y campaña local 2026 (10 conteos, desde el 03/07/2026) |
 | Calibración local 2026 | Experimental, **desactivada por defecto** |
 
 ## Funcionamiento
@@ -44,10 +44,12 @@ rama `main` y archivo principal `app.py`.
 - **Configuración del gemelo:** lote y fecha, meteorología y cobertura, parámetros.
 - **Estado del lote:** emergencia acumulada, flujo diario o semanal, curva base, estado
   actualizado y banda de control 600–800 °Cd desde el primer pico.
-- **Porcentaje acumulado:** se normaliza con la referencia disponible en cada corte (2024 hasta
-  el 02/07/2026; 2024 y 2026 después). Antes del 31/07/2024 figura «aún no estimable» (flujo
-  absoluto, tiempo térmico y alerta de inicio siguen disponibles). **Con la referencia 2024 sola,
-  el porcentaje de 2026 queda muy sobreestimado.**
+- **Porcentaje acumulado:** se normaliza con la referencia disponible en cada corte (2023 desde el 31/07/2023;
+  2023 y 2024 desde el 31/07/2024; 2023, 2024 y 2026 desde el 03/07/2026). Antes del 31/07/2023
+  figura «aún no estimable» (flujo absoluto, tiempo térmico y alerta de inicio siguen
+  disponibles). **Hasta el 02/07/2026 la mediana es el promedio de dos curvas de timing muy
+  distinto (2023: mayo; 2024: febrero–mayo): en 2026 da 46 % al 30/04 (observado 45 %, coincidencia
+  del promedio entre 1 % y 92 %), 78 % al 21/05 (observado 57 %) y 98 % al 17/06 (observado 92 %).**
 - **Observaciones:** CSV/XLS/XLSX de flujos (plantas/m²) o emergencia acumulada;
   repeticiones y cobertura opcional. Se guardan por lote en `data/twin_state.db`
   (no versionado; en discos efímeros conserve los originales).
@@ -84,6 +86,7 @@ variable de repositorio `PERGAMINO_APP_URL` con la URL del despliegue
 | `data/calibration/pergamino_2026_original.xlsx` | `VALIDA.xlsx` original |
 | `data/calibration/pergamino_2026_weather.csv` | Meteorología del ajuste (SIGA, 10 días ECMWF provisionales) |
 | `data/reference/pergamino_2024_{counts,weather,source}.*` | Curva DIMA 2024 digitalizada (relativa, quincenal), meteorología SIGA 2024 y procedencia |
+| `data/reference/pergamino_2023_{counts,source}.*` | Curva DIMA 2023 digitalizada (relativa, quincenal) y procedencia; **sin meteorología** (la serie SIGA 2023 está incompleta) |
 | `data/calibration/pergamino_2026{,_fit,_holdout,_source}.*` | Perfil experimental, ajuste, evaluación temporal y procedencia |
 | `tests/golden/` | Salidas del monolito para la prueba de equivalencia |
 
@@ -91,7 +94,7 @@ Para regenerar el perfil experimental: `python scripts/calibrate_site.py`.
 
 ## Límites conocidos
 
-- Dos campañas de evaluación (2024 digitalizada de un boletín, en unidades relativas; 2026 con 10 conteos), sin repeticiones ni validación independiente.
+- Dos campañas de evaluación del motor (2024 digitalizada de un boletín, en unidades relativas; 2026 con 10 conteos), sin repeticiones ni validación independiente. 2023 sólo aporta curva de referencia: no tiene meteorología completa y no se evaluó el motor en esa campaña.
 - Adelanto de la emergencia modelada en 2026 y primer flujo el 05/03 pese a que no hubo emergencia en febrero–marzo; la alerta de inicio hereda ese adelanto.
 - El desfase de 15 días mejora 2026 pero empeora 2024: es un corrimiento empírico.
 - No se verificó el aspecto visual en un navegador ni el despliegue en Streamlit Community Cloud (las 180 pruebas pasan en GitHub Actions).
