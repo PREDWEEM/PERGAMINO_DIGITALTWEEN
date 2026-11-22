@@ -11,8 +11,10 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from campaign import CAMPAIGN_YEAR, campaign_weather_path
 
-ARCHIVO = Path("meteo_daily.csv")
+
+ARCHIVO = campaign_weather_path(CAMPAIGN_YEAR)
 PARES = (
     ("TMAX", "TMAX_P50", "TMAX_Media_Ens"),
     ("TMIN", "TMIN_P50", "TMIN_Media_Ens"),

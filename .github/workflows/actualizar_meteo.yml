@@ -34,6 +34,20 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install requests pandas numpy xlrd openpyxl
 
+      - name: Seleccionar campaña por año calendario de Argentina
+        run: |
+          python - <<'PY'
+          import os
+          import actualizar_meteo_pergamino as actualizador
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as env:
+              env.write(f"CAMPAIGN_YEAR={actualizador.CAMPANIA_ANIO}\n")
+              env.write(f"WEATHER_FILE={actualizador.ARCHIVO_MAESTRO_DEFAULT}\n")
+              env.write(f"ESTADO_FILE={actualizador.ARCHIVO_ESTADO}\n")
+              env.write(f"SIGA_CACHE_FILE={actualizador.ARCHIVO_SIGA_CACHE}\n")
+              env.write(f"TOLERANCIA_INICIO_SIGA_DIAS={actualizador.TOLERANCIA_INICIO_SIGA_DIAS}\n")
+          print("Campaña", actualizador.CAMPANIA_ANIO, "→", actualizador.ARCHIVO_MAESTRO_DEFAULT)
+          PY
+
       - name: Verificar sintaxis
         run: |
           python -m py_compile actualizar_meteo_pergamino.py
@@ -50,7 +64,7 @@ jobs:
           SIGA_PARAMS_JSON: ${{ secrets.SIGA_PARAMS_JSON }}
           SIGA_POST_DATA_JSON: ${{ secrets.SIGA_POST_DATA_JSON }}
           SIGA_HEADERS_JSON: ${{ secrets.SIGA_HEADERS_JSON }}
-        run: python actualizar_meteo_pergamino_robusto.py
+        run: python actualizar_meteo_pergamino_robusto.py --year "$CAMPAIGN_YEAR"
 
       - name: Validar serie meteorológica operativa
         run: |
@@ -60,10 +74,16 @@ jobs:
 
           import numpy as np
           import pandas as pd
-          from actualizar_meteo_pergamino import CAMPANIA_END
+          import os
 
-          archivo = Path("meteo_daily.csv")
-          estado_path = Path("data/estado_actualizacion_meteo.json")
+          import actualizar_meteo_pergamino as actualizador
+
+          actualizador.configurar_campania(int(os.environ["CAMPAIGN_YEAR"]))
+          CAMPANIA_START = actualizador.CAMPANIA_START
+          CAMPANIA_END = actualizador.CAMPANIA_END
+
+          archivo = Path(os.environ["WEATHER_FILE"])
+          estado_path = Path(os.environ["ESTADO_FILE"])
           if not archivo.exists() or not estado_path.exists():
               raise SystemExit(
                   "No se generaron los archivos meteorológicos esperados."
@@ -135,8 +155,10 @@ jobs:
           observado = df["TipoDato"].astype(str).eq("Observado")
           provisional = df["TipoDato"].astype(str).eq("Provisional")
           pronostico = df["TipoDato"].astype(str).eq("Pronostico")
+          if (df["Fecha"].dt.date < CAMPANIA_START).any():
+              raise SystemExit(f"Hay fechas anteriores al {CAMPANIA_START:%d/%m/%Y}.")
           if (df["Fecha"].dt.date > CAMPANIA_END).any():
-              raise SystemExit("Hay fechas posteriores al 1 de octubre de 2026.")
+              raise SystemExit(f"Hay fechas posteriores al {CAMPANIA_END:%d/%m/%Y}.")
           if not pronostico.any() and hoy.date() <= CAMPANIA_END:
               raise SystemExit("No hay filas de pronóstico.")
           if (
@@ -223,12 +245,9 @@ jobs:
           TMPDIR_GENERADO="$(mktemp -d)"
           mkdir -p "$TMPDIR_GENERADO/data/historico_pronosticos"
 
-          [ -f meteo_daily.csv ] && \
-            cp meteo_daily.csv "$TMPDIR_GENERADO/meteo_daily.csv"
 
           for archivo in \
-            data/estado_actualizacion_meteo.json \
-            data/siga_pergamino_observado.csv
+            "$WEATHER_FILE" "$ESTADO_FILE" "$SIGA_CACHE_FILE"
           do
             if [ -f "$archivo" ]; then
               mkdir -p "$TMPDIR_GENERADO/$(dirname "$archivo")"
@@ -244,12 +263,9 @@ jobs:
           git reset --hard origin/main
 
           mkdir -p data/historico_pronosticos
-          [ -f "$TMPDIR_GENERADO/meteo_daily.csv" ] && \
-            cp "$TMPDIR_GENERADO/meteo_daily.csv" meteo_daily.csv
 
           for archivo in \
-            data/estado_actualizacion_meteo.json \
-            data/siga_pergamino_observado.csv
+            "$WEATHER_FILE" "$ESTADO_FILE" "$SIGA_CACHE_FILE"
           do
             if [ -f "$TMPDIR_GENERADO/$archivo" ]; then
               mkdir -p "$(dirname "$archivo")"
@@ -261,7 +277,7 @@ jobs:
             cp -a "$TMPDIR_GENERADO/data/historico_pronosticos/." \
               data/historico_pronosticos/ || true
 
-          git add -A meteo_daily.csv data/
+          git add -A "$WEATHER_FILE" data/
           if git diff --cached --quiet; then
             echo "No hay cambios para guardar."
             exit 0
