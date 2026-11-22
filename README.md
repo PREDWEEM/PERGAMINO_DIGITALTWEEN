@@ -100,3 +100,19 @@ Para regenerar el perfil experimental: `python scripts/calibrate_site.py`.
 - Adelanto de la emergencia modelada en 2026 y primer flujo el 05/03 pese a que no hubo emergencia en febrero–marzo; la alerta de inicio hereda ese adelanto hasta que haya conteos (con ellos, el inicio se ancla a la ventana observada, pero la masa de la emergencia sigue adelantada).
 - El desfase de 15 días mejora 2026 pero empeora 2024: es un corrimiento empírico.
 - No se verificó el aspecto visual en un navegador ni el despliegue en Streamlit Community Cloud (las 180 pruebas pasan en GitHub Actions).
+
+## Campaña 2027
+
+La campaña meteorológica se elige por el año calendario de Argentina (`campaign.py`):
+el **1 de enero de 2027** la actualización programada pasa sola a 2027 y escribe
+archivos propios, sin modificar la serie 2026:
+
+- `meteo_daily_2027.csv` (serie operativa)
+- `data/estado_actualizacion_meteo_2027.json` (estado)
+- `data/siga_pergamino_observado_2027.csv` (caché SIGA)
+
+Cada campaña va del 1 de enero al 1 de octubre inclusive. El 1 de enero sólo hay pronóstico; durante los primeros diez días, si SIGA todavía no publicó el año nuevo, las fechas vencidas se completan con ECMWF IFS provisional.
+La aplicación incluye un selector de campaña; abre la campaña actual en cuanto
+tiene meteorología y, hasta entonces, la última campaña con datos.
+Para regenerar una campaña concreta: `python actualizar_meteo_pergamino_robusto.py --year 2026`.
+El actualizador rechaza una campaña que aún no comenzó.

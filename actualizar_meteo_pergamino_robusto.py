@@ -610,9 +610,7 @@ def ejecutar() -> pd.DataFrame:
     hoy = base.hoy_argentina()
     ayer = min(hoy - timedelta(days=1), base.CAMPANIA_END)
 
-    observaciones, estado_siga = base.obtener_siga_dataframe(
-        base.CAMPANIA_START, ayer
-    )
+    observaciones, estado_siga = base.obtener_observaciones_campania(ayer)
     (
         observaciones,
         tmedia_derivada,
@@ -728,6 +726,7 @@ def ejecutar() -> pd.DataFrame:
         ),
         "filas_provisionales": len(provisionales),
         "fecha_fin_campania": base.CAMPANIA_END.isoformat(),
+        "campania": base.CAMPANIA_ANIO,
         "fuente_pronostico": "ECMWF_IFS_ENS_025" if len(pronostico) else None,
         "estadistico_operativo": "P50",
         "inicio_pronostico": str(pronostico["Fecha"].min()) if len(pronostico) else None,
@@ -759,13 +758,34 @@ def ejecutar() -> pd.DataFrame:
     return consolidado
 
 
-if __name__ == "__main__":
+def main(argv: list[str] | None = None) -> int:
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Actualizador meteorológico robusto por campaña.")
+    parser.add_argument(
+        "--year",
+        type=int,
+        default=base.CAMPANIA_ANIO,
+        help="Campaña meteorológica; por defecto, el año calendario de Argentina.",
+    )
+    args = parser.parse_args(argv)
+    base.configurar_campania(args.year)
+    if base.hoy_argentina() < base.CAMPANIA_START:
+        print(
+            f"❌ La campaña {args.year} aún no comenzó; no se genera meteorología futura.",
+            file=sys.stderr,
+        )
+        return 1
     try:
         ejecutar()
     except Exception as error:
         print(
-            f"❌ Error: {error}. "
-            "No se reemplazó meteo_daily.csv.",
+            f"❌ Error: {error}. No se reemplazó {base.ARCHIVO_MAESTRO_DEFAULT}.",
             file=sys.stderr,
         )
-        raise SystemExit(1)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
